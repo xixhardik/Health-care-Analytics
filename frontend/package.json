@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@kitware/vtk.js": "37.3.0",
     "clsx": "2.1.1",
     "lucide-react": "0.454.0",
     "next": "15.5.26",

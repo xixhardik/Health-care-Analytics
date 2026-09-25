@@ -11,6 +11,7 @@ inseparable from any stage a client can obtain.
 from __future__ import annotations
 
 import json
+import time
 
 import pytest
 
@@ -377,3 +378,133 @@ def test_no_traceback_leaks_from_a_bad_case_request(app_client):
     response = app_client.get("/api/longitudinal/demo-cases/%2E%2E%2Fsecrets")
     assert response.status_code in (404, 422)
     assert "Traceback" not in response.text
+
+
+# ---------------------------------------------------------------------------
+# Loading a stage as a real analysis (Sprint 8 commit 2)
+# ---------------------------------------------------------------------------
+
+
+def _wait_for(client, analysis_id: str, timeout: float = 420.0) -> dict:
+    deadline = time.time() + timeout
+    state: dict = {}
+    while time.time() < deadline:
+        state = client.get(f"/api/analysis/{analysis_id}/status").json()
+        if state["status"] in ("completed", "failed"):
+            break
+        time.sleep(0.4)
+    return state
+
+
+def test_a_demo_stage_can_be_loaded_as_a_real_analysis(app_client):
+    response = app_client.post(
+        f"/api/analysis/demo-stage/{CASE_ID}/pre_surgery"
+    )
+    if response.status_code == 404:
+        pytest.skip("Demo stage source study not extracted on this machine")
+    assert response.status_code == 201, response.text
+    body = response.json()
+    try:
+        # A real volume was read, not a canned payload.
+        assert body["study"]["slice_count"] > 0
+        assert body["status"] == "queued"
+        # The message must not describe this as follow-up imaging.
+        message = body["message"].lower()
+        assert "simulated longitudinal demo stage" in message
+        assert "not follow-up imaging" in message
+    finally:
+        app_client.delete(f"/api/analysis/{body['analysis_id']}")
+
+
+def test_the_loaded_stage_carries_its_disclaimer_into_the_result(app_client):
+    """The statement must survive all the way to what the UI reads."""
+    created = app_client.post(f"/api/analysis/demo-stage/{CASE_ID}/month_6")
+    if created.status_code == 404:
+        pytest.skip("Demo stage source study not extracted on this machine")
+    analysis_id = created.json()["analysis_id"]
+    try:
+        app_client.post(f"/api/analysis/{analysis_id}/run")
+        state = _wait_for(app_client, analysis_id)
+        assert state["status"] == "completed", state
+
+        result = app_client.get(f"/api/analysis/{analysis_id}/result").json()
+        stage = result["demo_stage"]
+        assert stage is not None
+        assert stage["case_id"] == CASE_ID
+        assert stage["stage_id"] == "month_6"
+        assert stage["label"] == "6-Month Recovery"
+        assert stage["is_simulated_timeline"] is True
+        assert stage["provenance"]["is_true_followup"] is False
+        assert stage["provenance"]["source_study_id"] == "6_t2"
+        assert "does not contain true postoperative" in stage["disclaimer"].lower()
+        assert "different spider studies" in stage["ui_notice"].lower()
+    finally:
+        app_client.delete(f"/api/analysis/{analysis_id}")
+
+
+def test_different_stages_load_different_source_studies(app_client):
+    """Stage switching must actually change the volume, not relabel one."""
+    made = {}
+    try:
+        for stage_id in ("pre_surgery", "month_6"):
+            response = app_client.post(
+                f"/api/analysis/demo-stage/{CASE_ID}/{stage_id}"
+            )
+            if response.status_code == 404:
+                pytest.skip("Demo stage source studies not extracted")
+            made[stage_id] = response.json()
+
+        a, b = made["pre_surgery"]["study"], made["month_6"]["study"]
+        assert a["filename"] != b["filename"], "both stages loaded the same file"
+        # 177_t2 and 6_t2 differ in slice count and in-plane size.
+        assert (a["slice_count"], a["dimensions"]) != (
+            b["slice_count"], b["dimensions"]
+        )
+    finally:
+        for payload in made.values():
+            app_client.delete(f"/api/analysis/{payload['analysis_id']}")
+
+
+def test_an_ordinary_analysis_has_no_demo_stage(app_client):
+    """A real study must not acquire a simulated timeline."""
+    created = app_client.post("/api/analysis/sample")
+    if created.status_code == 404:
+        pytest.skip("Sample volume not extracted on this machine")
+    analysis_id = created.json()["analysis_id"]
+    try:
+        app_client.post(f"/api/analysis/{analysis_id}/run")
+        state = _wait_for(app_client, analysis_id)
+        assert state["status"] == "completed", state
+        result = app_client.get(f"/api/analysis/{analysis_id}/result").json()
+        assert result["demo_stage"] is None
+    finally:
+        app_client.delete(f"/api/analysis/{analysis_id}")
+
+
+def test_loading_an_unknown_stage_is_refused(app_client):
+    response = app_client.post(f"/api/analysis/demo-stage/{CASE_ID}/month_99")
+    assert response.status_code == 404
+    body = response.json()["error"]
+    assert body["code"] == "DEMO_STAGE_NOT_FOUND"
+    assert body["details"]["valid_stages"] == EXPECTED_STAGES
+
+
+def test_loading_a_stage_of_an_unknown_case_is_refused(app_client):
+    response = app_client.post("/api/analysis/demo-stage/NOPE-99/pre_surgery")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "DEMO_CASE_NOT_FOUND"
+
+
+def test_loading_a_demo_stage_does_not_touch_raw_data(app_client, project_root):
+    """The source study is copied, never moved or rewritten."""
+    source = project_root / "data/extracted/images/177_t2.mha"
+    if not source.is_file():
+        pytest.skip("Demo stage source study not extracted on this machine")
+    before = (source.stat().st_size, source.stat().st_mtime_ns)
+
+    response = app_client.post(f"/api/analysis/demo-stage/{CASE_ID}/pre_surgery")
+    assert response.status_code == 201
+    app_client.delete(f"/api/analysis/{response.json()['analysis_id']}")
+
+    after = (source.stat().st_size, source.stat().st_mtime_ns)
+    assert before == after, "the raw source volume was modified"

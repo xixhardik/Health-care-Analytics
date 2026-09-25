@@ -12,6 +12,8 @@ import type {
   HealthResponse,
   HighlightMode,
   HistoryResponse,
+  LongitudinalCase,
+  LongitudinalCaseList,
   RunResponse,
   SliceMode,
   StatusResponse,
@@ -179,6 +181,25 @@ export const api = {
     }
     return `${API_BASE}/api/analysis/${id}/slice/${sliceIndex}?${params.toString()}`;
   },
+
+  /** Simulated longitudinal demonstration cases. */
+  longitudinalCases: () =>
+    request<LongitudinalCaseList>("/api/longitudinal/demo-cases"),
+
+  longitudinalCase: (caseId: string) =>
+    request<LongitudinalCase>(
+      `/api/longitudinal/demo-cases/${encodeURIComponent(caseId)}`,
+    ),
+
+  /**
+   * Run one demonstration stage's real source study through the real pipeline.
+   * The study is genuine; the timeline position is simulated.
+   */
+  loadDemoStage: (caseId: string, stageId: string) =>
+    request<UploadResponse>(
+      `/api/analysis/demo-stage/${encodeURIComponent(caseId)}/${encodeURIComponent(stageId)}`,
+      { method: "POST" },
+    ),
 
   downloadUrl: (id: string, fmt: "md" | "json" = "md") =>
     `${API_BASE}/api/analysis/${id}/download?fmt=${fmt}`,

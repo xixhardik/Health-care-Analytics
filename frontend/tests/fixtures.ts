@@ -8,7 +8,9 @@
 
 import type {
   AnalysisResult,
+  DemoStageRef,
   HealthResponse,
+  LongitudinalCase,
   StatusResponse,
 } from "@/lib/types";
 
@@ -318,6 +320,9 @@ export const result: AnalysisResult = {
   },
   // Server-decided: disc 1 carries a positive supported narrowing finding, disc 2
   // does not (its narrowing value is false), so only disc 1 may be marked red.
+  // Ordinary studies are not demonstration stages. Overridden per-test where a
+  // simulated timeline is under test.
+  demo_stage: null,
   finding_overlay: {
     disc_indices: [1],
     discs: [{ index: 1, findings: ["Disc narrowing"] }],
@@ -471,3 +476,185 @@ export const health: HealthResponse = {
   research_notice:
     "Research / educational prototype — results require expert radiological review.",
 };
+
+/* -------------------------------------------------------------------------- */
+/* Sprint 8: simulated longitudinal demonstration                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A demonstration stage, as the API attaches it to an analysis.
+ *
+ * Mirrors `DemoStageRef` in backend/app/schemas.py. The wording is the real
+ * wording: these strings are what the interface renders, so a test asserting on
+ * them is asserting on what a viewer actually reads.
+ */
+export const demoStage: DemoStageRef = {
+  case_id: "LS-DEMO-001",
+  stage_id: "pre_surgery",
+  label: "Pre-Surgery",
+  research_status: "Baseline",
+  display_reference: "Demonstration study A",
+  order: 1,
+  stage_note:
+    "Most degenerate of the four studies: nine thin discs, findings on eight of them.",
+  provenance: {
+    source_study_id: "177_t2",
+    source_patient_id: 177,
+    source_dataset: "SPIDER",
+    source_split: "test",
+    is_true_followup: false,
+    measurement_source: "real_pipeline",
+  },
+  disclaimer:
+    "Simulated longitudinal demonstration. The available SPIDER dataset does " +
+    "not contain true postoperative longitudinal follow-up for this case.",
+  ui_notice:
+    "Visual stages use different SPIDER studies to demonstrate the " +
+    "longitudinal workflow. They are not postoperative follow-up scans from " +
+    "the same patient.",
+  is_simulated_timeline: true,
+};
+
+/** The same result, presented as a demonstration stage. */
+export const demoStageResult: AnalysisResult = {
+  ...result,
+  demo_stage: demoStage,
+};
+
+/** Four stages, four different patients. */
+export const demoCase: LongitudinalCase = {
+  case_id: "LS-DEMO-001",
+  type: "SIMULATED_LONGITUDINAL_DEMO",
+  title: "Simulated longitudinal workflow demonstration",
+  is_true_followup: false,
+  is_same_patient: false,
+  source_dataset: "SPIDER lumbar spine MRI (research dataset)",
+  disclaimer: demoStage.disclaimer,
+  ui_notice: demoStage.ui_notice,
+  interpretation:
+    "Four real SPIDER studies from four different patients, arranged into a " +
+    "simulated timeline to demonstrate how a longitudinal system would operate.",
+  measurement_policy: { source: "real_pipeline" },
+  selection: { split: "test" },
+  stage_count: 4,
+  available_stage_count: 4,
+  stages: [
+    {
+      order: 1, stage_id: "pre_surgery", label: "Pre-Surgery",
+      research_status: "Baseline", display_reference: "Demonstration study A",
+      stage_note: null, scanner: "SIEMENS 1.5T", acquisition_timestamp: null,
+      available: true, unavailable_reason: null,
+      provenance: demoStage.provenance,
+      expected: { discs: 9, mean_disc_height_mm: 4.64 },
+    },
+    {
+      order: 2, stage_id: "post_surgery", label: "Post-Surgery",
+      research_status: "Early postoperative",
+      display_reference: "Demonstration study B",
+      stage_note: null, scanner: "SIEMENS 1.5T", acquisition_timestamp: null,
+      available: true, unavailable_reason: null,
+      provenance: {
+        source_study_id: "106_t2", source_patient_id: 106,
+        source_dataset: "SPIDER", source_split: "test",
+        is_true_followup: false, measurement_source: "real_pipeline",
+      },
+      expected: { discs: 7, mean_disc_height_mm: 5.8 },
+    },
+    {
+      order: 3, stage_id: "month_3", label: "3-Month Recovery",
+      research_status: "Recovery monitoring",
+      display_reference: "Demonstration study C",
+      stage_note: null, scanner: "Philips Healthcare 3.0T",
+      acquisition_timestamp: null, available: true, unavailable_reason: null,
+      provenance: {
+        source_study_id: "16_t2", source_patient_id: 16,
+        source_dataset: "SPIDER", source_split: "test",
+        is_true_followup: false, measurement_source: "real_pipeline",
+      },
+      expected: { discs: 7, mean_disc_height_mm: 7.79 },
+    },
+    {
+      order: 4, stage_id: "month_6", label: "6-Month Recovery",
+      research_status: "Final follow-up demonstration",
+      display_reference: "Demonstration study D",
+      stage_note: null, scanner: "SIEMENS 1.5T", acquisition_timestamp: null,
+      available: true, unavailable_reason: null,
+      provenance: {
+        source_study_id: "6_t2", source_patient_id: 6,
+        source_dataset: "SPIDER", source_split: "test",
+        is_true_followup: false, measurement_source: "real_pipeline",
+      },
+      expected: { discs: 6, mean_disc_height_mm: 8.49 },
+    },
+  ],
+};
+
+/**
+ * Build a volume payload in exactly the wire format the backend emits, so the
+ * client parser is tested against the real layout rather than a convenient one.
+ */
+export function buildVolumePayload(options: {
+  slices?: number;
+  rows?: number;
+  cols?: number;
+  findingDiscs?: number[];
+  formatVersion?: number;
+  discInstanceOffset?: number;
+  truncate?: number;
+} = {}): ArrayBuffer {
+  const slices = options.slices ?? 3;
+  const rows = options.rows ?? 4;
+  const cols = options.cols ?? 5;
+  const offset = options.discInstanceOffset ?? 10;
+  const voxels = slices * rows * cols;
+
+  const image = new Uint8Array(voxels);
+  const semantic = new Uint8Array(voxels);
+  const instance = new Uint8Array(voxels);
+  for (let i = 0; i < voxels; i += 1) image[i] = i % 256;
+  // A disc-2 region and a vertebra region, so label handling is exercised.
+  for (let i = 0; i < voxels; i += 1) {
+    if (i % 7 === 0) {
+      semantic[i] = 2;
+      instance[i] = offset + 2;
+    } else if (i % 11 === 0) {
+      semantic[i] = 1;
+      instance[i] = 1;
+    }
+  }
+
+  const header = {
+    format_version: options.formatVersion ?? 1,
+    analysis_id: "abc123abc123abcd",
+    pipeline_version: "SPIDER-Lumbar-v1",
+    axis_order: ["slice", "row", "col"],
+    dimensions: { slices, rows, cols },
+    spacing_mm: { row: 1.0, col: 1.0, slice: 4.0 },
+    native_in_plane_spacing_mm: [0.6, 0.6],
+    channels: [
+      { name: "image", offset: 0, length: voxels, dtype: "uint8" },
+      { name: "semantic", offset: voxels, length: voxels, dtype: "uint8" },
+      { name: "instance", offset: voxels * 2, length: voxels, dtype: "uint8" },
+    ],
+    semantic_labels: { "1": "vertebra", "2": "intervertebral_disc", "3": "spinal_canal" },
+    disc_instance_offset: offset,
+    finding_discs: options.findingDiscs ?? [2],
+    slice_ids: Array.from({ length: slices }, (_, i) => `s${i}`),
+    total_bytes: voxels * 3,
+    notice: "Voxel data for browser-side rendering.",
+  };
+
+  const encoded = new TextEncoder().encode(JSON.stringify(header));
+  const total = 4 + encoded.length + voxels * 3;
+  const buffer = new ArrayBuffer(options.truncate ?? total);
+  const bytes = new Uint8Array(buffer);
+  new DataView(buffer).setUint32(0, encoded.length, true);
+  bytes.set(encoded.subarray(0, Math.max(0, bytes.length - 4)), 4);
+  let cursor = 4 + encoded.length;
+  for (const channel of [image, semantic, instance]) {
+    if (cursor >= bytes.length) break;
+    bytes.set(channel.subarray(0, Math.max(0, bytes.length - cursor)), cursor);
+    cursor += channel.length;
+  }
+  return buffer;
+}

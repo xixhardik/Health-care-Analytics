@@ -488,6 +488,27 @@ class LongitudinalCaseList(BaseModel):
     research_statuses: list[str] = Field(default_factory=list)
 
 
+class DemoStageRef(BaseModel):
+    """Marks an analysis as one position in a simulated demonstration timeline.
+
+    Present only on analyses created through the demo-stage endpoint. It carries
+    the disclaimer with it so the interface cannot render the stage without also
+    having the statement that it is not follow-up imaging.
+    """
+
+    case_id: str
+    stage_id: str
+    label: str
+    research_status: str
+    display_reference: str = ""
+    order: int = 0
+    stage_note: str | None = None
+    provenance: StageProvenance
+    disclaimer: str
+    ui_notice: str
+    is_simulated_timeline: Literal[True] = True
+
+
 class AnalysisResult(BaseModel):
     analysis_id: str
     status: AnalysisStatus
@@ -495,6 +516,11 @@ class AnalysisResult(BaseModel):
     completed_at: datetime | None = None
     is_sample: bool = Field(
         False, description="True when created from the bundled sample study."
+    )
+    demo_stage: DemoStageRef | None = Field(
+        None,
+        description="Set when this analysis is a stage of a simulated "
+                    "longitudinal demonstration. Null for ordinary studies.",
     )
     pipeline: PipelineInfo
     study: StudyInfo

@@ -273,12 +273,80 @@ export interface FindingOverlayInfo {
   note: string;
 }
 
+export interface StageProvenance {
+  source_study_id: string;
+  source_patient_id: number | null;
+  source_dataset: string;
+  source_split: string | null;
+  /** Always false. SPIDER contains no postoperative follow-up. */
+  is_true_followup: false;
+  measurement_source: "real_pipeline" | "simulated_demo_value";
+}
+
+export interface LongitudinalStage {
+  order: number;
+  stage_id: string;
+  label: string;
+  research_status: string;
+  display_reference: string;
+  stage_note?: string | null;
+  scanner?: string | null;
+  acquisition_timestamp?: string | null;
+  available: boolean;
+  unavailable_reason?: string | null;
+  provenance: StageProvenance;
+  expected: Record<string, unknown>;
+}
+
+export interface LongitudinalCase {
+  case_id: string;
+  type: "SIMULATED_LONGITUDINAL_DEMO";
+  title: string;
+  is_true_followup: false;
+  is_same_patient: false;
+  source_dataset: string;
+  disclaimer: string;
+  ui_notice: string;
+  interpretation: string;
+  measurement_policy: Record<string, unknown>;
+  selection: Record<string, unknown>;
+  stage_count: number;
+  available_stage_count: number;
+  stages: LongitudinalStage[];
+}
+
+export interface LongitudinalCaseList {
+  cases: LongitudinalCase[];
+  total: number;
+  notice: string;
+  research_statuses: string[];
+}
+
+/**
+ * Present when an analysis is one position in a simulated demonstration
+ * timeline. Carries the disclaimer, so the stage cannot be rendered without it.
+ */
+export interface DemoStageRef {
+  case_id: string;
+  stage_id: string;
+  label: string;
+  research_status: string;
+  display_reference: string;
+  order: number;
+  stage_note?: string | null;
+  provenance: StageProvenance;
+  disclaimer: string;
+  ui_notice: string;
+  is_simulated_timeline: true;
+}
+
 export interface AnalysisResult {
   analysis_id: string;
   status: AnalysisStatus;
   created_at: string;
   completed_at?: string | null;
   is_sample: boolean;
+  demo_stage?: DemoStageRef | null;
   pipeline: PipelineInfo;
   study: StudyInfo;
   timepoint: Timepoint;

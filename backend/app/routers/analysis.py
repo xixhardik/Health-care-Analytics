@@ -20,6 +20,9 @@ from backend.app.schemas import (
     StatusResponse, StudyInfo, UploadResponse,
 )
 from backend.app.services.findings_overlay import overlay_discs, overlay_summary
+from backend.app.services.longitudinal import (
+    ManifestError, load_case, resolve_volume, stage_ids,
+)
 from backend.app.services.imaging import (
     CLASS_COLOURS, RENDER_MODES, encode_png, render_slice,
 )
@@ -123,7 +126,10 @@ async def upload(request: Request, file: UploadFile = File(...)) -> UploadRespon
     return _register(request, analysis_id, destination, info, is_sample=False)
 
 
-def _register(request, analysis_id, destination, info, *, is_sample: bool):
+def _register(
+    request, analysis_id, destination, info, *,
+    is_sample: bool, demo_stage: dict | None = None,
+):
     """Persist a validated upload as a new analysis record."""
     store = _store(request)
     created = utcnow()
@@ -149,14 +155,22 @@ def _register(request, analysis_id, destination, info, *, is_sample: bool):
         "stages_completed": ["Upload validated"],
         "upload_name": destination.name,
         "is_sample": is_sample,
+        "demo_stage": demo_stage,
         "study": study,
     })
 
-    message = (
-        f"{SAMPLE_LABEL} loaded and validated. Start the analysis to process it."
-        if is_sample
-        else "Upload validated. Start the analysis to process this study."
-    )
+    if demo_stage:
+        message = (
+            f"Simulated longitudinal demo stage '{demo_stage['label']}' loaded and "
+            f"validated. This is a real SPIDER study standing in for a timeline "
+            f"position, not follow-up imaging. Start the analysis to process it."
+        )
+    elif is_sample:
+        message = (
+            f"{SAMPLE_LABEL} loaded and validated. Start the analysis to process it."
+        )
+    else:
+        message = "Upload validated. Start the analysis to process this study."
     return UploadResponse(
         analysis_id=analysis_id,
         status="queued",
@@ -217,6 +231,125 @@ async def load_sample(request: Request) -> UploadResponse:
         ) from exc
 
     return _register(request, analysis_id, destination, info, is_sample=True)
+
+
+@router.post(
+    "/demo-stage/{case_id}/{stage_id}",
+    response_model=UploadResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create an analysis from one stage of a simulated longitudinal demo",
+)
+async def load_demo_stage(
+    request: Request, case_id: str, stage_id: str
+) -> UploadResponse:
+    """Run the study behind one demonstration stage through the real pipeline.
+
+    The stage's source study is a genuine SPIDER volume, processed by the identical
+    pipeline as any upload - nothing is pre-computed. What is simulated is the
+    *timeline*: the stages of a case are different studies from different patients,
+    not follow-up imaging of one person.
+
+    The disclaimer and the stage's provenance are attached to the analysis record,
+    so every later read of this analysis carries them and the interface cannot show
+    the stage without them.
+    """
+    settings = _settings(request)
+    store = _store(request)
+
+    try:
+        case = load_case(settings.project_root, case_id)
+    except FileNotFoundError:
+        raise ApiError(
+            "DEMO_CASE_NOT_FOUND",
+            f"No longitudinal demonstration case {case_id!r} is installed.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        ) from None
+    except ManifestError as exc:
+        raise ApiError(
+            "DEMO_CASE_INVALID", str(exc),
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ) from None
+
+    stage = next((s for s in case["stages"] if s["stage_id"] == stage_id), None)
+    if stage is None:
+        raise ApiError(
+            "DEMO_STAGE_NOT_FOUND",
+            f"Case {case_id!r} has no stage {stage_id!r}.",
+            status_code=status.HTTP_404_NOT_FOUND,
+            details={"valid_stages": stage_ids(case)},
+        )
+    if not stage["available"]:
+        raise ApiError(
+            "DEMO_STAGE_UNAVAILABLE",
+            stage["unavailable_reason"] or "This stage's source study is missing.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    raw = next(
+        s for s in _raw_stages(settings.project_root, case_id)
+        if s.get("stage_id") == stage_id
+    )
+    source = resolve_volume(settings.project_root, str(raw.get("volume_path") or ""))
+    if source is None:
+        raise ApiError(
+            "DEMO_STAGE_UNAVAILABLE",
+            "This stage's source study could not be resolved on this machine.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    analysis_id = new_analysis_id()
+    directory = store.directory(analysis_id)
+    directory.mkdir(parents=True, exist_ok=True)
+    destination = directory / sanitise_filename(source.name)
+
+    try:
+        destination.write_bytes(source.read_bytes())
+        info = validate_upload(destination, source.name)
+    except ValidationError as exc:
+        store.delete(analysis_id)
+        raise ApiError(
+            exc.code, exc.message, status_code=status.HTTP_400_BAD_REQUEST,
+            details=exc.details,
+        ) from exc
+    except OSError as exc:
+        store.delete(analysis_id)
+        logger.exception("Demo stage copy failed")
+        raise ApiError(
+            "DEMO_STAGE_UNAVAILABLE",
+            "This demonstration stage could not be prepared.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        ) from exc
+
+    demo_stage = {
+        "case_id": case["case_id"],
+        "stage_id": stage["stage_id"],
+        "label": stage["label"],
+        "research_status": stage["research_status"],
+        "display_reference": stage["display_reference"],
+        "order": stage["order"],
+        "stage_note": stage["stage_note"],
+        "provenance": stage["provenance"],
+        # Carried on the analysis itself, not looked up later, so the statement
+        # travels with every read of this study.
+        "disclaimer": case["disclaimer"],
+        "ui_notice": case["ui_notice"],
+        "is_simulated_timeline": True,
+    }
+    return _register(
+        request, analysis_id, destination, info,
+        is_sample=True, demo_stage=demo_stage,
+    )
+
+
+def _raw_stages(project_root, case_id: str) -> list[dict]:
+    """The manifest's own stage entries, for fields the API view does not expose.
+
+    ``volume_path`` is deliberately absent from the API response - a client has no
+    use for a server filesystem path - so it is read back from the manifest here.
+    """
+    path = project_root / "demo" / "longitudinal_cases" / case_id / "manifest.json"
+    with path.open(encoding="utf-8") as handle:
+        return json.load(handle).get("stages") or []
 
 
 # ---------------------------------------------------------------------------
@@ -295,7 +428,13 @@ async def result(request: Request, analysis_id: str) -> AnalysisResult:
         )
     # Derived on read rather than stored, so the overlay rule applies to analyses
     # that were completed before it existed and there is nothing to migrate.
-    payload = {**payload, "finding_overlay": overlay_summary(payload)}
+    payload = {
+        **payload,
+        "finding_overlay": overlay_summary(payload),
+        # From the record rather than the stored result: the pipeline has no
+        # concept of a demonstration stage, and should not acquire one.
+        "demo_stage": record.get("demo_stage"),
+    }
     return AnalysisResult(**payload)
 
 

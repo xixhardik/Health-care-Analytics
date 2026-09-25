@@ -13,17 +13,43 @@ import {
   ChevronUp,
   Download,
   FileText,
+  FlaskConical,
   Info,
   Layers,
+  Loader2,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { api, formatSeconds } from "@/lib/api";
 import { PROVENANCE_STYLES, SEVERITY_STYLES, SEG_CLASSES } from "@/lib/theme";
-import type { AnalysisResult, DiscResult } from "@/lib/types";
+import type {
+  AnalysisResult,
+  DemoStageRef,
+  DiscResult,
+  LongitudinalCase,
+} from "@/lib/types";
 import { DiscDetail, DiscList } from "./DiscPanel";
+
+/**
+ * VTK.js touches `window` and WebGL at import time, so it must not be part of a
+ * server render, and it should not be in the initial bundle for users who never
+ * open the 3D tab.
+ */
+const Mri3DViewer = dynamic(
+  () => import("./Mri3DViewer").then((m) => m.Mri3DViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid h-full min-h-[320px] place-items-center bg-black">
+        <p className="text-xs text-ink-muted">Loading 3D viewer…</p>
+      </div>
+    ),
+  },
+);
 import { MriViewer } from "./MriViewer";
 import { Badge, Button, FieldRow, Panel, PanelHeader, cn } from "./ui";
 
@@ -180,9 +206,122 @@ function StudyMeta({ result }: { result: AnalysisResult }) {
   );
 }
 
+/**
+ * The simulated-timeline disclaimer, shown in the actual interface.
+ *
+ * Deliberately not collapsible and not dismissible. Anyone looking at a stage is
+ * looking at a real scan of one patient standing in for a timeline position, and
+ * must be told so without having to open anything.
+ */
+function DemoStageBanner({ stage }: { stage: DemoStageRef }) {
+  return (
+    <div className="border-b border-severity-high/40 bg-severity-high/10 px-4 py-2.5 md:px-6">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <span className="inline-flex items-center gap-1.5 rounded bg-severity-high/20 px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-severity-high">
+          <FlaskConical className="h-3 w-3" aria-hidden />
+          Simulated Longitudinal Demo
+        </span>
+        <span className="text-xs font-medium text-ink">
+          Demo stage: {stage.label}
+        </span>
+        <Badge tone="muted">{stage.research_status}</Badge>
+        <Badge tone="muted">{stage.display_reference}</Badge>
+      </div>
+      <p className="mt-1.5 text-2xs leading-relaxed text-ink-muted">
+        {stage.ui_notice}
+      </p>
+      <p className="mt-1 text-2xs leading-relaxed text-ink-faint">
+        {stage.disclaimer}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Stage switcher. Each stage loads a *different* real study through the real
+ * pipeline, so switching genuinely changes the volume rather than relabelling one.
+ */
+function DemoStageSwitcher({ stage }: { stage: DemoStageRef }) {
+  const router = useRouter();
+  const [demoCase, setDemoCase] = React.useState<LongitudinalCase | null>(null);
+  const [busy, setBusy] = React.useState<string | null>(null);
+  const [failed, setFailed] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let alive = true;
+    api
+      .longitudinalCase(stage.case_id)
+      .then((value) => alive && setDemoCase(value))
+      .catch(() => alive && setDemoCase(null));
+    return () => {
+      alive = false;
+    };
+  }, [stage.case_id]);
+
+  const open = async (stageId: string) => {
+    setBusy(stageId);
+    setFailed(null);
+    try {
+      const created = await api.loadDemoStage(stage.case_id, stageId);
+      router.push(`/analysis/${created.analysis_id}`);
+    } catch (cause) {
+      setFailed(cause instanceof Error ? cause.message : "Could not load that stage.");
+      setBusy(null);
+    }
+  };
+
+  if (!demoCase) return null;
+
+  return (
+    <div className="border-b border-line-subtle bg-surface-1/60 px-4 py-2 md:px-6">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+        <span className="label-caps shrink-0">Demo stages</span>
+        {demoCase.stages.map((item) => {
+          const current = item.stage_id === stage.stage_id;
+          return (
+            <button
+              key={item.stage_id}
+              type="button"
+              disabled={!item.available || busy !== null || current}
+              onClick={() => open(item.stage_id)}
+              aria-current={current ? "step" : undefined}
+              title={
+                item.available
+                  ? `${item.label} — ${item.research_status}`
+                  : item.unavailable_reason ?? "Unavailable"
+              }
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded border px-2 py-1 text-2xs transition-colors",
+                current
+                  ? "border-accent bg-accent/15 font-medium text-accent"
+                  : item.available
+                    ? "border-line text-ink-muted hover:text-ink"
+                    : "border-line-subtle text-ink-faint opacity-50",
+              )}
+            >
+              <span className="font-mono">{item.order}</span>
+              {item.label}
+              {busy === item.stage_id ? (
+                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              ) : null}
+            </button>
+          );
+        })}
+        <span className="text-2xs text-ink-faint">
+          each stage is a different SPIDER study, processed by the same pipeline
+        </span>
+      </div>
+      {failed ? (
+        <p className="mt-1 text-2xs text-severity-high">{failed}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function ResultsView({ result }: { result: AnalysisResult }) {
   const [selected, setSelected] = React.useState<DiscResult | null>(null);
   const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [view, setView] = React.useState<"2d" | "3d">("2d");
 
   const focusSlice = selected?.representative_slice_index ?? null;
 
@@ -194,6 +333,8 @@ export function ResultsView({ result }: { result: AnalysisResult }) {
   return (
     <div className="flex min-h-0 flex-col">
       <ResearchBanner />
+      {result.demo_stage ? <DemoStageBanner stage={result.demo_stage} /> : null}
+      {result.demo_stage ? <DemoStageSwitcher stage={result.demo_stage} /> : null}
 
       {/* ------------------------------------------------- header row */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-subtle px-4 py-3 md:px-6">
@@ -238,6 +379,28 @@ export function ResultsView({ result }: { result: AnalysisResult }) {
               <Layers className="h-3.5 w-3.5" aria-hidden />
               Segmentation overlay
             </span>
+            <div
+              className="flex rounded-md border border-line bg-surface-2 p-0.5"
+              role="group"
+              aria-label="Viewer dimension"
+            >
+              {(["2d", "3d"] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setView(id)}
+                  aria-pressed={view === id}
+                  className={cn(
+                    "rounded px-2 py-1 text-2xs font-medium uppercase transition-colors",
+                    view === id
+                      ? "bg-accent/15 text-accent"
+                      : "text-ink-faint hover:text-ink",
+                  )}
+                >
+                  {id === "2d" ? "2D View" : "3D View"}
+                </button>
+              ))}
+            </div>
             <span className="flex flex-wrap items-center gap-2">
               {SEG_CLASSES.map((item) => {
                 const dice = result.segmentation.classes.find(
@@ -262,13 +425,32 @@ export function ResultsView({ result }: { result: AnalysisResult }) {
             </span>
           </div>
           <div className="min-h-[380px] flex-1">
-            <MriViewer
-              analysisId={result.analysis_id}
-              sliceCount={result.study.slice_count}
-              focusSlice={focusSlice}
-              highlightDisc={selected?.index ?? null}
-              findingOverlay={result.finding_overlay}
-            />
+            {/*
+              Both viewers read the same `selected` disc and the same
+              server-decided finding overlay, so they cannot disagree. The 2D
+              viewer is mounted unchanged; only its visibility is switched, which
+              preserves its slice position and prefetch cache across tab flips.
+            */}
+            <div className={view === "2d" ? "h-full" : "hidden"}>
+              <MriViewer
+                analysisId={result.analysis_id}
+                sliceCount={result.study.slice_count}
+                focusSlice={focusSlice}
+                highlightDisc={selected?.index ?? null}
+                findingOverlay={result.finding_overlay}
+              />
+            </div>
+            {view === "3d" ? (
+              <Mri3DViewer
+                analysisId={result.analysis_id}
+                highlightDisc={selected?.index ?? null}
+                findingOverlay={result.finding_overlay}
+                onSelectDisc={(index) => {
+                  const disc = result.discs.find((d) => d.index === index);
+                  if (disc) select(disc);
+                }}
+              />
+            ) : null}
           </div>
         </div>
 
