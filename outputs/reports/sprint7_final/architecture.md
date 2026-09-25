@@ -287,6 +287,10 @@ Base: `http://localhost:8000`. All endpoints under `/api`.
 | GET | `/api/analysis/{id}/status` | poll progress |
 | GET | `/api/analysis/{id}/result` | full structured result; 409 until complete |
 | GET | `/api/analysis/{id}/slice/{slice_id}` | one rendered slice as PNG |
+| GET | `/api/analysis/{id}/volume` | the whole volume for browser-side 3D rendering (Sprint 8) |
+| GET | `/api/longitudinal/demo-cases` | simulated longitudinal demonstration cases (Sprint 8) |
+| GET | `/api/longitudinal/demo-cases/{case_id}` | one demonstration case |
+| GET | `/api/longitudinal/demo-cases/{case_id}/stage/{stage_id}` | one timeline stage |
 | GET | `/api/analysis/{id}/report` | report payload |
 | GET | `/api/analysis/{id}/download` | `fmt=md` or `fmt=json`, as an attachment |
 | GET | `/api/analysis` | history, `limit` 1–200 |
@@ -447,6 +451,55 @@ Two consequences of rendering server-side:
 - **Slices of a completed analysis are immutable**, so the browser may cache
   them indefinitely and the viewer feels instant on re-navigation.
 
+### 11a. Volume transfer for 3D — a deliberate reversal (Sprint 8)
+
+> **This changes an architectural property this document previously stated
+> without qualification.** Through Sprint 7, the volume never crossed the
+> network. It does now, on one new path.
+
+`GET /api/analysis/{id}/volume` sends the image volume and both label maps in
+full. Browser-side volumetric rendering needs the voxels; there is no version of
+a real 3D viewer that works on rendered PNGs.
+
+What this costs: the data-minimisation guarantee described just above **does not
+apply to this endpoint**. A client that calls it receives labels for classes the
+user has hidden, because the whole volume goes at once. Class toggling in the 3D
+view is a client-side transfer-function change, not a server-side filter.
+
+What is retained:
+
+| Property | Still true? |
+| --- | --- |
+| Only completed analyses are served | yes — `VOLUME_NOT_READY` (409) otherwise |
+| Raw dataset files are never served | yes — only preprocessed `uint8` display arrays |
+| One request per analysis, cached `immutable` | yes |
+| Stored arrays are never mutated | yes |
+| The 2D slice path is unchanged | yes — `imaging.py` untouched |
+
+Wire format, defined once in `services/volume_export.py`:
+
+```
+[0:4]    uint32 little-endian  header_length
+[4:4+H]  UTF-8 JSON header
+[4+H:]   channel payloads, concatenated in header["channels"] order
+```
+
+Channels are `image`, `semantic`, `instance`, all `uint8`, all the same shape.
+No base64, so nothing inflates by a third; gzip carries the compression. Measured
+on the sample study: 6.2 MB of raw voxels leaves as roughly 1 MB, of which the
+image volume is 943 KB and the two label maps are 13.7 KB and 10.7 KB.
+
+The header carries `disc_instance_offset` and `finding_discs`, so the 3D view
+highlights discs and marks findings from the **server's** decision rather than
+re-deriving either in the browser. That is what keeps the 2D and 3D views from
+disagreeing.
+
+Why this is acceptable here: the deployment is localhost, single-user, already
+unauthenticated (§14), and the voxels in question are preprocessed display
+arrays from a licensed research dataset the operator already has on disk. It
+would not be acceptable in a multi-tenant or networked deployment, and §14's
+conclusion is unchanged — this must not be exposed without access control.
+
 The viewer (`components/MriViewer.tsx`) supports next/previous slice, keyboard
 navigation (arrows, Home/End), per-class visibility checkboxes, and mode
 selection. Slice position is reported as `Slice n / total`.
@@ -556,7 +609,7 @@ Listed so the diagram is not read as an abridgement of something larger.
 | Multi-GPU or batch serving | out of scope; CPU inference is ~3 s per study |
 | DICOM ingestion | converted volume formats only; modality comes from a filename heuristic and is labelled as such |
 | Model retraining or fine-tuning in the app | the pipeline is frozen by design |
-| Longitudinal / postoperative comparison | the dataset has a single timepoint and no outcome labels; `timepoint` is a schema seam only |
+| Real longitudinal / postoperative comparison | the dataset has a single timepoint and no outcome labels. Sprint 8 adds a **simulated** demonstration workflow (`demo/longitudinal_cases/`, `/api/longitudinal/*`) that stages four *different* real studies from four *different* patients to show how such a system would operate. It claims no recovery outcome, and the loader refuses any manifest declaring itself real follow-up. |
 | Composite severity score | combining findings into one number would be an unvalidated clinical judgement |
 | Server-side rendering of analysis data | client fetch is sufficient and keeps the API the single source of truth |
 | Authentication | see §14 — this is a limitation, not a decision to be comfortable with |

@@ -27,6 +27,7 @@ from backend.app.services.sample_study import (
     SAMPLE_LABEL, SAMPLE_NOTE, sample_study_path,
 )
 from backend.app.services.storage import new_analysis_id, utcnow
+from backend.app.services.volume_export import build_volume_payload
 from ml.volume import ValidationError, sanitise_filename, validate_upload
 
 logger = logging.getLogger("lumbar.api")
@@ -405,6 +406,71 @@ async def slice_image(
             # Which discs the server decided to mark, for auditing a rendered
             # frame without re-deriving the rule.
             "X-Finding-Discs": ",".join(str(i) for i in sorted(finding_discs)),
+        },
+    )
+
+
+@router.get(
+    "/{analysis_id}/volume",
+    summary="Download the analysis volume for browser-side 3D rendering",
+    responses={200: {"content": {"application/octet-stream": {}}}},
+    response_class=Response,
+)
+async def volume(request: Request, analysis_id: str) -> Response:
+    """Return the whole volume in one response, for a WebGL renderer.
+
+    **This intentionally reverses the previous architecture.** Until Sprint 8 the
+    volume never crossed the network: slices were composed server-side and sent as
+    PNGs, so a class hidden in the interface was never transmitted. Real
+    volumetric rendering needs the voxels, so this endpoint sends the image volume
+    and both label maps in full - including labels for classes the user has
+    hidden. The slice endpoint is unchanged and still the path the 2D viewer uses.
+
+    Restricted to completed analyses, because the arrays do not exist before then.
+    See ``services/volume_export.py`` for the wire format.
+    """
+    _require_record(request, analysis_id)
+    arrays = _store(request).read_arrays(analysis_id)
+    if arrays is None:
+        raise ApiError(
+            "VOLUME_NOT_READY",
+            "The volume is available once the analysis has completed.",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+
+    stored = _store(request).read_result(analysis_id) or {}
+    try:
+        payload, header = build_volume_payload(
+            arrays,
+            analysis_id=analysis_id,
+            study=stored.get("study"),
+            pipeline_version=(stored.get("pipeline") or {}).get("version"),
+            finding_discs=tuple(overlay_discs(stored)) if stored else (),
+        )
+    except ValueError as exc:
+        # A malformed stored volume is a server-side problem, but it must not leak
+        # a traceback or 500 without a code the client can act on.
+        logger.exception("Volume export failed for %s", analysis_id)
+        raise ApiError(
+            "VOLUME_UNAVAILABLE",
+            f"The stored volume for this analysis could not be serialised: {exc}",
+            status_code=status.HTTP_409_CONFLICT,
+        ) from None
+
+    return Response(
+        content=payload,
+        media_type="application/octet-stream",
+        headers={
+            # A completed analysis's volume never changes, so one fetch per
+            # analysis is enough and a revisit is free.
+            "Cache-Control": "public, max-age=86400, immutable",
+            "X-Volume-Format-Version": str(header["format_version"]),
+            "X-Volume-Dimensions": (
+                f"{header['dimensions']['slices']}x"
+                f"{header['dimensions']['rows']}x"
+                f"{header['dimensions']['cols']}"
+            ),
+            "X-Finding-Discs": ",".join(str(i) for i in header["finding_discs"]),
         },
     )
 

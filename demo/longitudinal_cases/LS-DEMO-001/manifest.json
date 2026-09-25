@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0",
+  "case_id": "LS-DEMO-001",
+  "type": "SIMULATED_LONGITUDINAL_DEMO",
+  "title": "Simulated longitudinal workflow demonstration",
+  "is_true_followup": false,
+  "is_same_patient": false,
+  "source_dataset": "SPIDER lumbar spine MRI (research dataset)",
+  "disclaimer": "Simulated longitudinal demonstration. The available SPIDER dataset does not contain true postoperative longitudinal follow-up for this case.",
+  "ui_notice": "Visual stages use different SPIDER studies to demonstrate the longitudinal workflow. They are not postoperative follow-up scans from the same patient.",
+  "interpretation": "Four real SPIDER studies from four different patients, arranged into a simulated timeline to demonstrate how a longitudinal system would operate. This is not one patient followed through surgery and recovery, and no postoperative recovery outcome is claimed.",
+  "measurement_policy": {
+    "source": "real_pipeline",
+    "note": "Every measurement and finding shown for a stage is produced by running the frozen Sprint 1 preprocessing, Sprint 3 segmentation and Sprint 5 post-processing pipeline on that stage's real source study. No clinical measurement is fabricated. The simulated element is the arrangement of four unrelated studies into a timeline, not the numbers.",
+    "trend_caveat": "Any trend across stages is a consequence of which studies were selected. It is not an observed recovery trajectory and must not be read as one."
+  },
+  "selection": {
+    "split": "test",
+    "rationale": "All four studies come from the 33-patient held-out test split, so the segmentation on display was never trained on. Each was verified end to end through the real API - preprocessing, segmentation, Sprint 5 indexing and PNG rendering in original, mask, overlay and findings modes - before being selected.",
+    "criteria": [
+      "T2 modality, because the Pfirrmann estimator is validated on T2 and T2-SPACE only",
+      "at least 6 indexed discs with usable lumbar anatomy",
+      "passes preprocessing, segmentation and Sprint 5 indexing without error",
+      "renders correctly in every viewer mode",
+      "visually distinct from the other stages in scanner, resolution and anatomy"
+    ]
+  },
+  "stages": [
+    {
+      "order": 1,
+      "stage_id": "pre_surgery",
+      "label": "Pre-Surgery",
+      "research_status": "Baseline",
+      "directory": "pre_surgery",
+      "display_reference": "Demonstration study A",
+      "source_study_id": "177_t2",
+      "source_patient_id": 177,
+      "source_split": "test",
+      "source_dataset": "SPIDER",
+      "volume_path": "data/extracted/images/177_t2.mha",
+      "is_true_followup": false,
+      "measurement_source": "real_pipeline",
+      "acquisition_timestamp": null,
+      "scanner": "SIEMENS 1.5T",
+      "expected": {
+        "discs": 9,
+        "slices": 21,
+        "mean_disc_height_mm": 4.64,
+        "finding_associated_discs": 8
+      },
+      "stage_note": "Most degenerate of the four studies: nine thin discs, findings on eight of them. Used as the baseline position in the demonstration timeline."
+    },
+    {
+      "order": 2,
+      "stage_id": "post_surgery",
+      "label": "Post-Surgery",
+      "research_status": "Early postoperative",
+      "directory": "post_surgery",
+      "display_reference": "Demonstration study B",
+      "source_study_id": "106_t2",
+      "source_patient_id": 106,
+      "source_split": "test",
+      "source_dataset": "SPIDER",
+      "volume_path": "data/extracted/images/106_t2.mha",
+      "is_true_followup": false,
+      "measurement_source": "real_pipeline",
+      "acquisition_timestamp": null,
+      "scanner": "SIEMENS 1.5T",
+      "expected": {
+        "discs": 7,
+        "slices": 15,
+        "mean_disc_height_mm": 5.8,
+        "finding_associated_discs": 7
+      },
+      "stage_note": "A different patient with substantial but somewhat less severe degeneration. Occupies the early postoperative position in the demonstration. No surgery is depicted, because no postoperative imaging exists in this dataset."
+    },
+    {
+      "order": 3,
+      "stage_id": "month_3",
+      "label": "3-Month Recovery",
+      "research_status": "Recovery monitoring",
+      "directory": "month_3",
+      "display_reference": "Demonstration study C",
+      "source_study_id": "16_t2",
+      "source_patient_id": 16,
+      "source_split": "test",
+      "source_dataset": "SPIDER",
+      "volume_path": "data/extracted/images/16_t2.mha",
+      "is_true_followup": false,
+      "measurement_source": "real_pipeline",
+      "acquisition_timestamp": null,
+      "scanner": "Philips Healthcare 3.0T",
+      "expected": {
+        "discs": 7,
+        "slices": 24,
+        "mean_disc_height_mm": 7.79,
+        "finding_associated_discs": 2
+      },
+      "stage_note": "Deliberately a different scanner and field strength from the other stages, so the demonstration also shows the pipeline handling acquisition variation."
+    },
+    {
+      "order": 4,
+      "stage_id": "month_6",
+      "label": "6-Month Recovery",
+      "research_status": "Final follow-up demonstration",
+      "directory": "month_6",
+      "display_reference": "Demonstration study D",
+      "source_study_id": "6_t2",
+      "source_patient_id": 6,
+      "source_split": "test",
+      "source_dataset": "SPIDER",
+      "volume_path": "data/extracted/images/6_t2.mha",
+      "is_true_followup": false,
+      "measurement_source": "real_pipeline",
+      "acquisition_timestamp": null,
+      "scanner": "SIEMENS 1.5T",
+      "expected": {
+        "discs": 6,
+        "slices": 16,
+        "mean_disc_height_mm": 8.49,
+        "finding_associated_discs": 1
+      },
+      "stage_note": "Least degenerate of the four: six well-preserved discs with a single finding-associated level. Occupies the final position in the demonstration timeline."
+    }
+  ]
+}

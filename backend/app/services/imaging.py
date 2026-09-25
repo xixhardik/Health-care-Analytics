@@ -1,8 +1,17 @@
-"""Slice rendering for the viewer.
+"""Slice rendering for the 2D viewer.
 
-The whole point of this module is that the volume never crosses the network. The
-frontend asks for one slice in one of three renderings and gets back a small PNG;
-the arrays stay on the server.
+The point of this module is that the volume does not cross the network *on this
+path*. The frontend asks for one slice in one of three renderings and gets back a
+small PNG; the arrays stay on the server, and a class hidden in the interface is
+never transmitted because the filtering happens here.
+
+**Scope note, Sprint 8.** That is no longer true of the application as a whole.
+``services/volume_export.py`` and ``GET /api/analysis/{id}/volume`` do send the
+full volume, because browser-side volumetric rendering cannot work without the
+voxels. This module is unchanged and remains the 2D viewer's path; the
+data-minimisation property described above applies to it, not to the volume
+endpoint. The trade is recorded in
+``outputs/reports/sprint7_final/architecture.md``.
 
 Class colours live in one table here and are mirrored in the frontend theme, so
 overlay colours are defined in a single place per layer rather than scattered

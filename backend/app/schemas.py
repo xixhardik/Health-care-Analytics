@@ -404,6 +404,90 @@ class FindingOverlayInfo(BaseModel):
     )
 
 
+class StageProvenance(BaseModel):
+    """Where a demonstration stage's imaging actually came from.
+
+    Travels with every stage so a consumer cannot render one without also having
+    the fact that it is not a follow-up scan.
+    """
+
+    source_study_id: str
+    source_patient_id: int | None = None
+    source_dataset: str = "SPIDER"
+    source_split: str | None = None
+    is_true_followup: Literal[False] = Field(
+        False,
+        description="Always false. The SPIDER dataset contains no postoperative "
+                    "longitudinal follow-up, so no stage can be one.",
+    )
+    measurement_source: Literal["real_pipeline", "simulated_demo_value"] = (
+        "real_pipeline"
+    )
+
+
+class LongitudinalStage(BaseModel):
+    """One position in a simulated demonstration timeline."""
+
+    order: int
+    stage_id: str
+    label: str
+    research_status: str = Field(
+        ...,
+        description="Research-oriented status, e.g. Baseline or Recovery "
+                    "monitoring. Not a clinical assessment of a patient.",
+    )
+    display_reference: str = Field(
+        "",
+        description="Non-identifying label for the interface to show, so a "
+                    "patient identifier is not surfaced without reason.",
+    )
+    stage_note: str | None = None
+    scanner: str | None = None
+    acquisition_timestamp: datetime | None = Field(
+        None,
+        description="Null for every current stage: genuine acquisition times are "
+                    "not available, and are not invented.",
+    )
+    available: bool
+    unavailable_reason: str | None = None
+    provenance: StageProvenance
+    expected: dict[str, Any] = Field(default_factory=dict)
+
+
+class LongitudinalCase(BaseModel):
+    """A simulated longitudinal demonstration case.
+
+    Not real follow-up data. The stages are different studies from different
+    patients, arranged into a timeline to demonstrate the workflow.
+    """
+
+    case_id: str
+    type: Literal["SIMULATED_LONGITUDINAL_DEMO"]
+    title: str
+    is_true_followup: Literal[False] = False
+    is_same_patient: Literal[False] = False
+    source_dataset: str
+    disclaimer: str
+    ui_notice: str
+    interpretation: str
+    measurement_policy: dict[str, Any] = Field(default_factory=dict)
+    selection: dict[str, Any] = Field(default_factory=dict)
+    stage_count: int
+    available_stage_count: int
+    stages: list[LongitudinalStage] = Field(default_factory=list)
+
+
+class LongitudinalCaseList(BaseModel):
+    cases: list[LongitudinalCase] = Field(default_factory=list)
+    total: int
+    notice: str = Field(
+        ...,
+        description="Rendered verbatim: states that these are simulated "
+                    "demonstrations, not follow-up data.",
+    )
+    research_statuses: list[str] = Field(default_factory=list)
+
+
 class AnalysisResult(BaseModel):
     analysis_id: str
     status: AnalysisStatus

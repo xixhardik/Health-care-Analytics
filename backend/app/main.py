@@ -20,11 +20,13 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.middleware.gzip import GZipMiddleware  # noqa: E402
 
 from backend.app.config import get_settings  # noqa: E402
 from backend.app.errors import register_error_handlers  # noqa: E402
 from backend.app.routers import analysis as analysis_router  # noqa: E402
 from backend.app.routers import health as health_router  # noqa: E402
+from backend.app.routers import longitudinal as longitudinal_router  # noqa: E402
 from backend.app.services.jobs import JobManager  # noqa: E402
 from backend.app.services.model_service import init_model_service  # noqa: E402
 from backend.app.services.mri_analysis_service import MriAnalysisService  # noqa: E402
@@ -96,6 +98,12 @@ def create_app() -> FastAPI:
         redoc_url="/api/redoc",
         openapi_url="/api/openapi.json",
     )
+    # The volume endpoint sends ~6 MB of uint8 voxels. Label maps in particular
+    # are extremely compressible (4 distinct values over a mostly-empty volume),
+    # so gzip takes the whole payload to roughly 1 MB. Without this the "one
+    # volume request" design still moves 6 MB per analysis. minimum_size skips
+    # the small JSON responses where framing overhead would dominate.
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -107,6 +115,7 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
     app.include_router(health_router.router)
     app.include_router(analysis_router.router)
+    app.include_router(longitudinal_router.router)
     return app
 
 
