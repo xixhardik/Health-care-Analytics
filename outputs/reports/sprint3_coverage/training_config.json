@@ -1,0 +1,78 @@
+{
+  "experiment": "sprint3_coverage",
+  "controlled_variable": "training-slice coverage (fixed subset -> rotating)",
+  "changed": {
+    "sampler": "rotating shard sampler",
+    "slices_per_epoch": 2284,
+    "coverage_pct_over_run": 100.0,
+    "epochs_to_full_coverage": 4
+  },
+  "unchanged_from_sprint2_extended": {
+    "architecture": "UNet(in=1, classes=4, base=16, depth=4, bilinear=True) 1,963,860 params",
+    "base_channels": 16,
+    "depth": 4,
+    "batch_size": 8,
+    "optimiser": "Adam",
+    "lr": 0.001,
+    "scheduler": "CosineAnnealingLR(T_max=30)",
+    "loss": "CrossEntropy + soft Dice (equal weight)",
+    "augmentation": "translate +/-5% + intensity jitter, train only",
+    "preprocessing": "Sprint 1 slices, 352x256 at 1.0 mm/px",
+    "seed": 42,
+    "split": "Sprint 1 patient-level",
+    "validation_slices": 800,
+    "n_classes": 4,
+    "input_size": [
+      352,
+      256
+    ],
+    "memory_format": "channels_last",
+    "bf16_autocast": false
+  },
+  "different_by_design": {
+    "initialisation": "random (NOT resumed, NOT warm-started)",
+    "early_stopping_min_delta": 0.001,
+    "rationale": "Warm-starting from the converged Sprint 2 weights would confound the coverage variable. min_delta was 0 in Sprint 2, which made early stopping ineffective."
+  },
+  "early_stopping": {
+    "monitor": "val_fg_dice",
+    "patience": 6,
+    "min_delta": 0.001
+  },
+  "sampler_verification": {
+    "leakage_free": true,
+    "violations": 0,
+    "val_test_patients_excluded": 66,
+    "coverage": {
+      "strategy": "rotating",
+      "n_epochs_simulated": 30,
+      "slices_per_epoch_requested": 2284,
+      "slices_per_epoch_actual": 2284,
+      "train_slices_total": 9128,
+      "unique_slices_seen": 9128,
+      "coverage_pct": 100.0,
+      "slices_never_seen": 0,
+      "epochs_to_full_coverage": 4,
+      "times_seen": {
+        "min": 7,
+        "mean": 7.51,
+        "max": 8,
+        "std": 0.5
+      }
+    }
+  },
+  "baselines_to_beat": {
+    "sprint2_extended_val_fg_dice": 0.8985,
+    "sprint2_extended_test_macro_fg_dice": 0.8979,
+    "sprint2_extended_test_vertebra_dice": 0.9133,
+    "sprint2_extended_test_ivd_dice": 0.8779,
+    "sprint2_extended_test_canal_dice": 0.9026,
+    "sprint2_extended_disc_indexing_pct": 82.6
+  },
+  "test_set_used_during_training": false,
+  "device": "cpu",
+  "resume": {
+    "mode": "fresh_random_init",
+    "resumed_at_epoch": 0
+  }
+}

@@ -1,0 +1,16 @@
+# Backend dependencies, pinned.
+#
+# The ML stack (torch, numpy, pandas, scipy, scikit-learn, SimpleITK, opencv) is
+# already required by the research code in src/ and is listed in the root
+# requirements.txt. This file covers only what the web layer adds on top.
+
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.9.2
+python-multipart==0.0.18
+pillow==10.3.0
+joblib==1.4.2
+
+# Testing
+pytest==9.1.1
+httpx==0.28.1

@@ -1,0 +1,113 @@
+{
+  "checks": {
+    "slice index loaded": {
+      "passed": true,
+      "detail": "12,415 slices, splits={'train': 9128, 'test': 1655, 'val': 1632}"
+    },
+    "patient-level split is disjoint": {
+      "passed": true,
+      "detail": "verified by assert_no_patient_leakage() inside build_dataloaders"
+    },
+    "image tensor shape": {
+      "passed": true,
+      "detail": "(8, 1, 352, 256) (N,C,H,W), dtype=torch.float32, range=[0.0000, 1.0000]"
+    },
+    "mask tensor shape": {
+      "passed": true,
+      "detail": "(8, 352, 256) (N,H,W), dtype=torch.int64"
+    },
+    "tensor dtypes": {
+      "passed": true,
+      "detail": "image=torch.float32 (need float32), mask=torch.int64 (need int64)"
+    },
+    "valid class IDs": {
+      "passed": true,
+      "detail": "present=[0, 1, 2, 3], allowed=0..3 ({0: 'background', 1: 'vertebra', 2: 'intervertebral_disc', 3: 'spinal_canal'})"
+    },
+    "model built": {
+      "passed": true,
+      "detail": "UNet(in=1, classes=4, base=16, depth=4, bilinear=True) 1,963,860 params"
+    },
+    "forward pass": {
+      "passed": true,
+      "detail": "logits (8, 4, 352, 256), finite=True"
+    },
+    "loss calculation": {
+      "passed": true,
+      "detail": "total=2.3134 (ce=1.4426, dice=0.8708)"
+    },
+    "backpropagation reaches first layer": {
+      "passed": true,
+      "detail": "grad norm=0.152010"
+    },
+    "all trainable params have gradients": {
+      "passed": true,
+      "detail": "0 parameter tensors without a gradient"
+    },
+    "optimiser step changes weights": {
+      "passed": true,
+      "detail": "max abs delta=0.00100000"
+    },
+    "prediction generation": {
+      "passed": true,
+      "detail": "prediction (8, 352, 256), values=[3]"
+    },
+    "metrics computable": {
+      "passed": true,
+      "detail": "pixel_accuracy=0.0149 on an untrained model (expected to be poor - this only checks the metric code runs)"
+    },
+    "training loop runs": {
+      "passed": true,
+      "detail": "train_loss per epoch: [1.9363, 1.6547]"
+    }
+  },
+  "passed": true,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.936258730135466,
+      "train_ce": 1.1018153178064447,
+      "train_dice_loss": 0.8344433966435885,
+      "train_seconds": 42.2,
+      "train_fg_dice": 0.16662036992706855,
+      "val_loss": 1.9047026872634887,
+      "val_seconds": 3.3,
+      "val_fg_dice": 0.0,
+      "val_fg_iou": 0.0,
+      "val_fg_precision": 0.0,
+      "val_fg_recall": 0.0,
+      "val_dice_background": 0.9679791981512862,
+      "val_dice_vertebra": 0.0,
+      "val_dice_intervertebral_disc": 0.0,
+      "val_dice_spinal_canal": 0.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.654661398184927,
+      "train_ce": 0.8608097120335227,
+      "train_dice_loss": 0.7938516892884907,
+      "train_seconds": 41.7,
+      "train_fg_dice": 0.3581874367894277,
+      "val_loss": 1.5785288095474244,
+      "val_seconds": 2.9,
+      "val_fg_dice": 0.0,
+      "val_fg_iou": 0.0,
+      "val_fg_precision": 0.0,
+      "val_fg_recall": 0.0,
+      "val_dice_background": 0.9758601432945062,
+      "val_dice_vertebra": 0.0,
+      "val_dice_intervertebral_disc": 0.0,
+      "val_dice_spinal_canal": 0.0
+    }
+  ],
+  "config": {
+    "batch_size": 8,
+    "downsample": 1,
+    "base_channels": 16,
+    "depth": 4,
+    "smoke_epochs": 2,
+    "n_train_slices_used": 152,
+    "n_val_slices_used": 33
+  },
+  "model": "UNet(in=1, classes=4, base=16, depth=4, bilinear=True) 1,963,860 params"
+}

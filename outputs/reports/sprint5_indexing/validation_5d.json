@@ -1,0 +1,73 @@
+{
+  "split_used": "val",
+  "disc_params": {
+    "min_area_px": 20,
+    "col_tolerance_px": null,
+    "use_series_tracks": true,
+    "cluster_px": 8.0,
+    "min_track_support": 0.25,
+    "assign_max_dist_px": 14.0,
+    "informative_min_ivd_px": 0,
+    "informative_min_components": 0,
+    "use_vertebral_bodies": false,
+    "body_canal_margin_px": 0.0,
+    "max_discs": 9
+  },
+  "schemes": {
+    "ordered_components": {
+      "n_vertebrae_analysed": 8180,
+      "categories": {
+        "correct": {
+          "n": 951,
+          "pct": 11.63
+        },
+        "shifted": {
+          "n": 1679,
+          "pct": 20.53
+        },
+        "merged": {
+          "n": 89,
+          "pct": 1.09
+        },
+        "split": {
+          "n": 3427,
+          "pct": 41.89
+        },
+        "missed": {
+          "n": 2034,
+          "pct": 24.87
+        }
+      },
+      "pct_index_correct": 11.63
+    },
+    "vertebral_bodies": {
+      "n_vertebrae_analysed": 8180,
+      "categories": {
+        "correct": {
+          "n": 5115,
+          "pct": 62.53
+        },
+        "shifted": {
+          "n": 727,
+          "pct": 8.89
+        },
+        "merged": {
+          "n": 89,
+          "pct": 1.09
+        },
+        "split": {
+          "n": 50,
+          "pct": 0.61
+        },
+        "missed": {
+          "n": 2199,
+          "pct": 26.88
+        }
+      },
+      "pct_index_correct": 62.53
+    }
+  },
+  "delta_pp": 50.9,
+  "adopt_5d": true,
+  "runtime_seconds": 34.3
+}

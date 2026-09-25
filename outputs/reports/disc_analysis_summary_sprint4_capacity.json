@@ -1,0 +1,396 @@
+{
+  "mask_source": "prediction",
+  "mm_per_pixel": 1.0,
+  "n_slices_processed": 12415,
+  "n_slices_missing_mask": 10760,
+  "n_disc_slice_records": 6722,
+  "n_disc_records": 467,
+  "n_patients": 33,
+  "n_series": 64,
+  "linkage": {
+    "n_measured_disc_rows": 467,
+    "n_rows_with_grading": 442,
+    "n_rows_without_grading": 25,
+    "n_unique_patient_disc_measured": 242,
+    "n_unique_patient_disc_graded": 1518,
+    "n_graded_not_measured": 1291,
+    "n_measured_not_graded": 15,
+    "graded_not_measured_examples": [
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        1,
+        5
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        1,
+        7
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        2,
+        6
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        3
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        3,
+        5
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        4,
+        1
+      ]
+    ],
+    "measured_not_graded_examples": [
+      [
+        11,
+        9
+      ],
+      [
+        16,
+        8
+      ],
+      [
+        64,
+        8
+      ],
+      [
+        74,
+        7
+      ],
+      [
+        80,
+        8
+      ],
+      [
+        80,
+        9
+      ],
+      [
+        89,
+        7
+      ],
+      [
+        93,
+        7
+      ],
+      [
+        93,
+        8
+      ],
+      [
+        98,
+        8
+      ],
+      [
+        107,
+        7
+      ],
+      [
+        107,
+        8
+      ],
+      [
+        166,
+        9
+      ],
+      [
+        214,
+        8
+      ],
+      [
+        223,
+        8
+      ]
+    ],
+    "n_primary_series_rows": 239,
+    "rows_per_split": {
+      "test": 467
+    },
+    "primary_rows_per_split": {
+      "test": 239
+    }
+  },
+  "measurement_summary": {
+    "area_mm2": {
+      "n": 467,
+      "mean": 225.0814,
+      "std": 82.7451,
+      "min": 21.0,
+      "p25": 165.0,
+      "median": 219.0,
+      "p75": 281.0,
+      "max": 472.0
+    },
+    "height_mm_central": {
+      "n": 467,
+      "mean": 7.4339,
+      "std": 2.4319,
+      "min": 2.0,
+      "p25": 5.5275,
+      "median": 7.375,
+      "p75": 9.056,
+      "max": 16.421
+    },
+    "height_mm_anterior": {
+      "n": 467,
+      "mean": 6.6914,
+      "std": 2.2932,
+      "min": 1.0,
+      "p25": 4.871,
+      "median": 6.5,
+      "p75": 8.2155,
+      "max": 15.909
+    },
+    "height_mm_posterior": {
+      "n": 467,
+      "mean": 5.1261,
+      "std": 1.4376,
+      "min": 2.333,
+      "p25": 4.0,
+      "median": 5.0,
+      "p75": 6.0,
+      "max": 9.889
+    },
+    "height_mm_mean": {
+      "n": 467,
+      "mean": 6.5162,
+      "std": 1.9258,
+      "min": 1.909,
+      "p25": 5.0,
+      "median": 6.432,
+      "p75": 7.7915,
+      "max": 13.03
+    },
+    "height_mm_min": {
+      "n": 467,
+      "mean": 2.0792,
+      "std": 0.9426,
+      "min": 1.0,
+      "p25": 1.0,
+      "median": 2.0,
+      "p75": 3.0,
+      "max": 6.0
+    },
+    "ap_extent_mm": {
+      "n": 467,
+      "mean": 33.9957,
+      "std": 5.5085,
+      "min": 9.0,
+      "p25": 31.0,
+      "median": 34.0,
+      "p75": 37.0,
+      "max": 50.0
+    },
+    "height_ratio_to_series_median": {
+      "n": 467,
+      "mean": 1.0224,
+      "std": 0.2879,
+      "min": 0.3333,
+      "p25": 0.8302,
+      "median": 1.0,
+      "p75": 1.1695,
+      "max": 2.1043
+    },
+    "height_ratio_to_neighbours": {
+      "n": 467,
+      "mean": 1.0072,
+      "std": 0.224,
+      "min": 0.2951,
+      "p25": 0.8928,
+      "median": 0.9935,
+      "p75": 1.0905,
+      "max": 2.2605
+    },
+    "disc_to_vertebra_height_ratio": {
+      "n": 467,
+      "mean": 0.3214,
+      "std": 0.1417,
+      "min": 0.0655,
+      "p25": 0.2252,
+      "median": 0.2938,
+      "p75": 0.3892,
+      "max": 1.3778
+    },
+    "height_ap_asymmetry": {
+      "n": 467,
+      "mean": 0.1939,
+      "std": 0.2407,
+      "min": -0.8727,
+      "p25": 0.0498,
+      "median": 0.1816,
+      "p75": 0.3351,
+      "max": 1.1734
+    },
+    "vertebral_ap_offset_mm": {
+      "n": 403,
+      "mean": 2.386,
+      "std": 24.4486,
+      "min": -39.453,
+      "p25": -19.967,
+      "median": 0.279,
+      "p75": 26.403,
+      "max": 70.452
+    },
+    "canal_width_at_disc_mm": {
+      "n": 459,
+      "mean": 11.17,
+      "std": 2.2813,
+      "min": 3.625,
+      "p25": 9.983,
+      "median": 11.459,
+      "p75": 12.646,
+      "max": 18.145
+    }
+  },
+  "columns": [
+    "patient_id",
+    "ivd_label",
+    "series_id",
+    "modality",
+    "split",
+    "representative_slice_id",
+    "n_slices_present",
+    "mask_source",
+    "instance_label",
+    "raw_mask_label",
+    "mm_per_pixel",
+    "grading_level",
+    "n_series_for_patient",
+    "is_primary_series",
+    "has_grading",
+    "pfirrmann_grade",
+    "modic",
+    "any_modic",
+    "bulging",
+    "narrowing",
+    "herniation",
+    "spondylolisthesis",
+    "upper_endplate",
+    "lower_endplate",
+    "slice_id",
+    "slice_index",
+    "area_px",
+    "area_mm2",
+    "height_mm_bbox",
+    "height_mm_mean",
+    "height_mm_median",
+    "height_mm_min",
+    "height_mm_max",
+    "height_mm_anterior",
+    "height_mm_central",
+    "height_mm_posterior",
+    "height_mm_mid_column",
+    "ap_extent_px",
+    "ap_extent_mm",
+    "aspect_ratio",
+    "fill_ratio",
+    "centroid_row",
+    "centroid_col",
+    "bbox_row_min",
+    "bbox_col_min",
+    "bbox_row_max",
+    "bbox_col_max",
+    "vertebra_above_label",
+    "vertebra_below_label",
+    "vertebra_above_area_px",
+    "vertebra_below_area_px",
+    "n_components",
+    "area_mm2_across_slices_mean",
+    "area_mm2_across_slices_std",
+    "area_mm2_across_slices_max",
+    "height_mm_central_across_slices_mean",
+    "height_mm_central_across_slices_std",
+    "height_mm_central_across_slices_max",
+    "ap_extent_mm_across_slices_mean",
+    "ap_extent_mm_across_slices_std",
+    "ap_extent_mm_across_slices_max",
+    "vertebra_above_height_mm",
+    "vertebra_above_height_mm_n_slices_defined",
+    "vertebra_below_height_mm",
+    "vertebra_below_height_mm_n_slices_defined",
+    "vertebral_ap_offset_mm",
+    "vertebral_ap_offset_mm_n_slices_defined",
+    "canal_width_at_disc_mm",
+    "canal_width_at_disc_mm_n_slices_defined",
+    "intensity_mean",
+    "intensity_std",
+    "intensity_p10",
+    "intensity_median",
+    "intensity_p90",
+    "intensity_cv",
+    "intensity_nucleus_mean",
+    "intensity_annulus_mean",
+    "intensity_nucleus_annulus_ratio",
+    "intensity_vertebra_mean",
+    "intensity_disc_vertebra_ratio",
+    "intensity_canal_mean",
+    "intensity_disc_canal_ratio",
+    "any_fragmented_slice",
+    "series_median_height_mm",
+    "height_ratio_to_series_median",
+    "series_median_area_mm2",
+    "area_ratio_to_series_median",
+    "height_mm_disc_below",
+    "height_mm_disc_above",
+    "height_ratio_to_neighbours",
+    "disc_to_vertebra_height_ratio",
+    "height_ap_asymmetry"
+  ]
+}

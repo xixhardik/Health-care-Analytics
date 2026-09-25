@@ -1,0 +1,82 @@
+{
+  "seed": 42,
+  "fractions_requested": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "stratified": true,
+  "split_unit": "patient_id",
+  "leakage_check": {
+    "ok": true,
+    "overlaps": {},
+    "ids_per_split": {
+      "test": 33,
+      "train": 152,
+      "val": 33
+    },
+    "total_ids_counted": 218,
+    "total_ids_unique": 218
+  },
+  "counts": {
+    "train": {
+      "patients": 152,
+      "series": 319,
+      "slices": 9128,
+      "modalities": {
+        "t2": 147,
+        "t1": 140,
+        "t2_SPACE": 32
+      }
+    },
+    "val": {
+      "patients": 33,
+      "series": 64,
+      "slices": 1632,
+      "modalities": {
+        "t2": 32,
+        "t1": 28,
+        "t2_SPACE": 4
+      }
+    },
+    "test": {
+      "patients": 33,
+      "series": 64,
+      "slices": 1655,
+      "modalities": {
+        "t2": 31,
+        "t1": 28,
+        "t2_SPACE": 5
+      }
+    }
+  },
+  "achieved": [
+    {
+      "split": "train",
+      "patients": 152,
+      "patients_pct": 69.7,
+      "series": 319,
+      "series_pct": 71.4,
+      "slices": 9128,
+      "slices_pct": 73.5
+    },
+    {
+      "split": "val",
+      "patients": 33,
+      "patients_pct": 15.1,
+      "series": 64,
+      "series_pct": 14.3,
+      "slices": 1632,
+      "slices_pct": 13.1
+    },
+    {
+      "split": "test",
+      "patients": 33,
+      "patients_pct": 15.1,
+      "series": 64,
+      "series_pct": 14.3,
+      "slices": 1655,
+      "slices_pct": 13.3
+    }
+  ]
+}

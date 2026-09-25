@@ -1,0 +1,41 @@
+{
+  "experiment": "sprint2_extended",
+  "resume": {
+    "mode": "full_from_experiment_checkpoint",
+    "resumed_at_epoch": 30,
+    "source": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\last.pt",
+    "optimiser_state_restored": true,
+    "note": "Exact continuation: optimiser, scheduler and RNG restored."
+  },
+  "epochs_completed_total": 30,
+  "epochs_run_this_session": 0,
+  "max_epochs": 30,
+  "stopped_early": false,
+  "stop_reason": "",
+  "best_val_dice": 0.898513214251773,
+  "best_val_dice_epoch": 30,
+  "best_val_loss": 0.13474805168807508,
+  "best_val_loss_epoch": 29,
+  "epochs_without_improvement_at_end": 0,
+  "wall_seconds_this_session": 0.0,
+  "wall_minutes_this_session": 0.0,
+  "mean_epoch_seconds": 770.2,
+  "restored_checkpoint": {
+    "criterion": "val_dice",
+    "path": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\best_val_dice.pt",
+    "metadata": {
+      "epoch": 30,
+      "val_fg_dice": 0.898513214251773,
+      "val_loss": 0.13479716420173646,
+      "selection": "best validation foreground Dice"
+    },
+    "restored": true
+  },
+  "test_set_used_during_training": false,
+  "checkpoints": {
+    "last": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\last.pt",
+    "best_val_dice": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\best_val_dice.pt",
+    "best_val_loss": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\best_val_loss.pt",
+    "per_epoch_dir": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\epochs"
+  }
+}

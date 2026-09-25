@@ -1,0 +1,186 @@
+{
+  "experiment": "sprint4_capacity_smoke",
+  "purpose": "feasibility and throughput check before the full run",
+  "test_set_used": false,
+  "device": "cpu",
+  "torch_version": "2.13.0+cpu",
+  "torch_threads": 12,
+  "cuda_available": false,
+  "architecture": "UNet(in=1, classes=4, base=32, depth=4, bilinear=True) 7,849,124 params",
+  "base_channels": 32,
+  "depth": 4,
+  "parameters": {
+    "total": 7849124,
+    "trainable": 7849124
+  },
+  "params_vs_sprint3": 3.997,
+  "batch_size": 2,
+  "single_step": {
+    "loss": 2.188889,
+    "global_grad_l2_norm": 3.454729
+  },
+  "throughput": {
+    "train_s_per_step": 1.5716,
+    "train_img_per_s": 1.273,
+    "infer_s_per_step": 0.4193,
+    "infer_img_per_s": 4.77,
+    "train_batches_per_epoch": 1142,
+    "val_batches_per_epoch": 400,
+    "projected_epoch_minutes": 32.7,
+    "projected_30_epoch_hours": 16.4,
+    "audit_estimate_30_epoch_hours": 16.9
+  },
+  "memory": {
+    "baseline": {
+      "rss_mb": 251.2,
+      "commit_mb": 723.4,
+      "peak_rss_mb": 251.2,
+      "peak_commit_mb": 723.4,
+      "system_available_mb": 1056.8,
+      "system_percent_used": 87.1
+    },
+    "after_training_steps": {
+      "rss_mb": 738.7,
+      "commit_mb": 1311.3,
+      "peak_rss_mb": 1139.4,
+      "peak_commit_mb": 1931.4,
+      "system_available_mb": 994.8,
+      "system_percent_used": 87.9
+    },
+    "peak_commit_mb": 1931.4,
+    "commit_minus_rss_mb": 572.6,
+    "proven_commit_mb": 2550.0,
+    "peak_commit_vs_proven": 0.757,
+    "audit_predicted_peak_commit_mb": 1822.9
+  },
+  "smoke_epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 1.451197936421349,
+      "val_loss": 1.0581086313023287,
+      "val_fg_dice": 0.19323045353411852,
+      "unique_train_slices_seen": 168,
+      "cumulative_coverage_pct": 1.84,
+      "epoch_seconds": 140.2
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.8360149192522808,
+      "val_loss": 0.6459220682873446,
+      "val_fg_dice": 0.6265686904680581,
+      "unique_train_slices_seen": 335,
+      "cumulative_coverage_pct": 3.67,
+      "epoch_seconds": 144.1
+    }
+  ],
+  "validation_batch_size_invariance": {
+    "dice_batch_2": 0.6265686904680581,
+    "dice_batch_8": 0.6265686904680581,
+    "absolute_difference": 0.0
+  },
+  "checks": {
+    "no CUDA assumed (CPU-only run)": {
+      "passed": true,
+      "detail": "cuda.is_available()=False, device=cpu"
+    },
+    "model initialises at width 32": {
+      "passed": true,
+      "detail": "base_channels=32, depth=4, bilinear=True"
+    },
+    "parameter count is 4x Sprint 3 width-16 model": {
+      "passed": true,
+      "detail": "7,849,124 params vs width-16 1,963,860 (4.00x)"
+    },
+    "all parameters trainable and finite": {
+      "passed": true,
+      "detail": "trainable 7,849,124/7,849,124, no NaN/Inf"
+    },
+    "batch size 2 produces the expected batch shape": {
+      "passed": true,
+      "detail": "84 train batches, 17 val batches"
+    },
+    "test split never loaded": {
+      "passed": true,
+      "detail": "splits loaded: ['train', 'val']"
+    },
+    "input batch is (2, 1, 352, 256)": {
+      "passed": true,
+      "detail": "(2, 1, 352, 256)"
+    },
+    "forward pass output shape correct": {
+      "passed": true,
+      "detail": "(2, 4, 352, 256)"
+    },
+    "loss is finite": {
+      "passed": true,
+      "detail": "loss=2.18889 (ce=1.33406, dice=0.85483)"
+    },
+    "every parameter received a gradient": {
+      "passed": true,
+      "detail": "56 tensors with grads, 0 without"
+    },
+    "gradients finite and non-zero": {
+      "passed": true,
+      "detail": "global grad L2 norm = 3.45473"
+    },
+    "optimiser step leaves parameters finite": {
+      "passed": true,
+      "detail": "no NaN/Inf after one Adam step"
+    },
+    "throughput measured and finite": {
+      "passed": true,
+      "detail": "1.27 img/s train, 4.77 img/s infer"
+    },
+    "peak commit within the memory-proven envelope": {
+      "passed": true,
+      "detail": "1931.4 MB <= 2550 MB proven"
+    },
+    "system did not run out of memory": {
+      "passed": true,
+      "detail": "994.8 MB available"
+    },
+    "validation ran and produced a finite Dice": {
+      "passed": true,
+      "detail": "2 epochs, last val_fg_dice=0.62657"
+    },
+    "all logged epoch losses finite": {
+      "passed": true,
+      "detail": "ep1 train=1.4512 val=1.0581, ep2 train=0.8360 val=0.6459"
+    },
+    "every required per-epoch field is logged": {
+      "passed": true,
+      "detail": "missing: none"
+    },
+    "history.csv and history.json written": {
+      "passed": true,
+      "detail": "history.csv, history.json"
+    },
+    "last.pt / best_val_dice.pt written": {
+      "passed": true,
+      "detail": "last.pt 94.3 MB"
+    },
+    "per-epoch checkpoint archive written": {
+      "passed": true,
+      "detail": "2 files"
+    },
+    "checkpoint carries optimiser, scheduler, RNG, epoch, best metric": {
+      "passed": true,
+      "detail": "optimiser_state=yes, scheduler_state=yes, rng.torch=yes, rng.numpy=yes, epoch=yes, best_val_dice=yes"
+    },
+    "weights round-trip into a freshly built width-32 model": {
+      "passed": true,
+      "detail": "max |delta| = 0.00e+00"
+    },
+    "checkpoint architecture records width 32": {
+      "passed": true,
+      "detail": "{\"in_channels\": 1, \"n_classes\": 4, \"base_channels\": 32, \"depth\": 4, \"bilinear\": true}"
+    },
+    "validation Dice identical at batch 2 and batch 8": {
+      "passed": true,
+      "detail": "batch2=0.62656869, batch8=0.62656869, delta=0.00e+00"
+    }
+  },
+  "n_passed": 25,
+  "n_failed": 0,
+  "verdict": "PASS"
+}

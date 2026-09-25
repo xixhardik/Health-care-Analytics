@@ -1,0 +1,556 @@
+{
+  "experiment": "sprint2_extended",
+  "training_summary": {
+    "experiment": "sprint2_extended",
+    "resume": {
+      "mode": "weights_only_from_baseline",
+      "resumed_at_epoch": 12,
+      "source": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\models\\unet_last.pt",
+      "optimiser_state_restored": false,
+      "scheduler_fast_forwarded_steps": 12,
+      "learning_rate_at_resume": 0.00065451,
+      "note": "The baseline checkpoint stored weights only - no optimiser or scheduler state - so Adam's moment estimates restart from zero and the LR schedule was re-derived. This run is therefore a warm-restarted continuation, NOT bit-identical to an uninterrupted 30-epoch run. The baseline also used CosineAnnealingLR(T_max=12), so its LR had annealed to ~0 by epoch 12; here the schedule is re-cast over 30 epochs."
+    },
+    "epochs_completed_total": 30,
+    "epochs_run_this_session": 18,
+    "max_epochs": 30,
+    "stopped_early": false,
+    "stop_reason": "reached the maximum of 30 epochs without triggering early stopping",
+    "best_val_dice": 0.898513214251773,
+    "best_val_dice_epoch": 30,
+    "best_val_loss": 0.13474805168807508,
+    "best_val_loss_epoch": 29,
+    "epochs_without_improvement_at_end": 0,
+    "wall_seconds_this_session": 13866.3,
+    "wall_minutes_this_session": 231.1,
+    "mean_epoch_seconds": 770.2,
+    "restored_checkpoint": {
+      "criterion": "val_dice",
+      "path": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\best_val_dice.pt",
+      "metadata": {
+        "epoch": 30,
+        "val_fg_dice": 0.898513214251773,
+        "val_loss": 0.13479716420173646,
+        "selection": "best validation foreground Dice"
+      },
+      "restored": true
+    },
+    "test_set_used_during_training": false,
+    "checkpoints": {
+      "last": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\last.pt",
+      "best_val_dice": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\best_val_dice.pt",
+      "best_val_loss": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\best_val_loss.pt",
+      "per_epoch_dir": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\epochs"
+    }
+  },
+  "convergence": {
+    "last6_min": 0.8980622008275306,
+    "last6_max": 0.898513214251773,
+    "last6_spread": 0.00045101342424236357,
+    "last6_mean_gain": 8.5e-05,
+    "mid_mean_gain": 0.00102,
+    "gain_ratio": 12.0,
+    "final_lr": 2.7390523158633003e-06,
+    "stopped_early": false,
+    "converged": true
+  },
+  "segmentation_comparisons": [
+    {
+      "metric": "background/dice",
+      "baseline": 0.9949861408243694,
+      "extended": 0.9951361582860946,
+      "higher_is_better": true,
+      "delta": 0.00015,
+      "pct_change": 0.015,
+      "verdict": "improved"
+    },
+    {
+      "metric": "background/iou",
+      "baseline": 0.9900223083893724,
+      "extended": 0.9903194014711294,
+      "higher_is_better": true,
+      "delta": 0.000297,
+      "pct_change": 0.03,
+      "verdict": "improved"
+    },
+    {
+      "metric": "background/precision",
+      "baseline": 0.9946791954886439,
+      "extended": 0.9950933170598021,
+      "higher_is_better": true,
+      "delta": 0.000414,
+      "pct_change": 0.042,
+      "verdict": "improved"
+    },
+    {
+      "metric": "background/recall",
+      "baseline": 0.9952932756574168,
+      "extended": 0.9951790032013872,
+      "higher_is_better": true,
+      "delta": -0.000114,
+      "pct_change": -0.011,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "vertebra/dice",
+      "baseline": 0.9093716405993282,
+      "extended": 0.9133188035532562,
+      "higher_is_better": true,
+      "delta": 0.003947,
+      "pct_change": 0.434,
+      "verdict": "improved"
+    },
+    {
+      "metric": "vertebra/iou",
+      "baseline": 0.8338052396684892,
+      "extended": 0.8404661887402192,
+      "higher_is_better": true,
+      "delta": 0.006661,
+      "pct_change": 0.799,
+      "verdict": "improved"
+    },
+    {
+      "metric": "vertebra/precision",
+      "baseline": 0.9172073494238122,
+      "extended": 0.9177741992028966,
+      "higher_is_better": true,
+      "delta": 0.000567,
+      "pct_change": 0.062,
+      "verdict": "improved"
+    },
+    {
+      "metric": "vertebra/recall",
+      "baseline": 0.9016686787475059,
+      "extended": 0.9089064569458621,
+      "higher_is_better": true,
+      "delta": 0.007238,
+      "pct_change": 0.803,
+      "verdict": "improved"
+    },
+    {
+      "metric": "intervertebral_disc/dice",
+      "baseline": 0.8760470376020119,
+      "extended": 0.8779045274169535,
+      "higher_is_better": true,
+      "delta": 0.001857,
+      "pct_change": 0.212,
+      "verdict": "improved"
+    },
+    {
+      "metric": "intervertebral_disc/iou",
+      "baseline": 0.7794338970671322,
+      "extended": 0.7823795290752139,
+      "higher_is_better": true,
+      "delta": 0.002946,
+      "pct_change": 0.378,
+      "verdict": "improved"
+    },
+    {
+      "metric": "intervertebral_disc/precision",
+      "baseline": 0.8782046077711393,
+      "extended": 0.8710914480938522,
+      "higher_is_better": true,
+      "delta": -0.007113,
+      "pct_change": -0.81,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "intervertebral_disc/recall",
+      "baseline": 0.873900042873655,
+      "extended": 0.8848250213220693,
+      "higher_is_better": true,
+      "delta": 0.010925,
+      "pct_change": 1.25,
+      "verdict": "improved"
+    },
+    {
+      "metric": "spinal_canal/dice",
+      "baseline": 0.9003545240865538,
+      "extended": 0.9025608597591165,
+      "higher_is_better": true,
+      "delta": 0.002206,
+      "pct_change": 0.245,
+      "verdict": "improved"
+    },
+    {
+      "metric": "spinal_canal/iou",
+      "baseline": 0.8187679973299152,
+      "extended": 0.8224245214736993,
+      "higher_is_better": true,
+      "delta": 0.003657,
+      "pct_change": 0.447,
+      "verdict": "improved"
+    },
+    {
+      "metric": "spinal_canal/precision",
+      "baseline": 0.8960469090156664,
+      "extended": 0.8925774880780194,
+      "higher_is_better": true,
+      "delta": -0.003469,
+      "pct_change": -0.387,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "spinal_canal/recall",
+      "baseline": 0.904703755687575,
+      "extended": 0.9127700831840023,
+      "higher_is_better": true,
+      "delta": 0.008066,
+      "pct_change": 0.892,
+      "verdict": "improved"
+    },
+    {
+      "metric": "macro_foreground/dice",
+      "baseline": 0.8952577340959645,
+      "extended": 0.8979280635764421,
+      "higher_is_better": true,
+      "delta": 0.00267,
+      "pct_change": 0.298,
+      "verdict": "improved"
+    },
+    {
+      "metric": "macro_foreground/iou",
+      "baseline": 0.8106690446885122,
+      "extended": 0.8150900797630442,
+      "higher_is_better": true,
+      "delta": 0.004421,
+      "pct_change": 0.545,
+      "verdict": "improved"
+    },
+    {
+      "metric": "macro_foreground/precision",
+      "baseline": 0.8971529554035392,
+      "extended": 0.8938143784582561,
+      "higher_is_better": true,
+      "delta": -0.003339,
+      "pct_change": -0.372,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "macro_foreground/recall",
+      "baseline": 0.8934241591029121,
+      "extended": 0.9021671871506446,
+      "higher_is_better": true,
+      "delta": 0.008743,
+      "pct_change": 0.979,
+      "verdict": "improved"
+    },
+    {
+      "metric": "pixel_accuracy",
+      "baseline": 0.9903807520899135,
+      "extended": 0.9906705425192255,
+      "higher_is_better": true,
+      "delta": 0.00029,
+      "pct_change": 0.029,
+      "verdict": "improved"
+    },
+    {
+      "metric": "per_patient_dice/background",
+      "baseline": 0.9950537979589253,
+      "extended": 0.995219324304875,
+      "higher_is_better": true,
+      "delta": 0.000166,
+      "pct_change": 0.017,
+      "verdict": "improved"
+    },
+    {
+      "metric": "per_patient_dice/vertebra",
+      "baseline": 0.9100912969899574,
+      "extended": 0.9140512378366564,
+      "higher_is_better": true,
+      "delta": 0.00396,
+      "pct_change": 0.435,
+      "verdict": "improved"
+    },
+    {
+      "metric": "per_patient_dice/intervertebral_disc",
+      "baseline": 0.8842155106794298,
+      "extended": 0.8867838384169692,
+      "higher_is_better": true,
+      "delta": 0.002568,
+      "pct_change": 0.29,
+      "verdict": "improved"
+    },
+    {
+      "metric": "per_patient_dice/spinal_canal",
+      "baseline": 0.9003562055277189,
+      "extended": 0.9025260226445113,
+      "higher_is_better": true,
+      "delta": 0.00217,
+      "pct_change": 0.241,
+      "verdict": "improved"
+    },
+    {
+      "metric": "disc_identification/pct_slices_with_matching_disc_count",
+      "baseline": 74.26,
+      "extended": 75.71,
+      "higher_is_better": true,
+      "delta": 1.45,
+      "pct_change": 1.953,
+      "verdict": "improved"
+    },
+    {
+      "metric": "disc_identification/pct_discs_region_found",
+      "baseline": 95.34,
+      "extended": 95.68,
+      "higher_is_better": true,
+      "delta": 0.34,
+      "pct_change": 0.357,
+      "verdict": "improved"
+    },
+    {
+      "metric": "disc_identification/pct_discs_index_correct",
+      "baseline": 78.4,
+      "extended": 82.6,
+      "higher_is_better": true,
+      "delta": 4.2,
+      "pct_change": 5.357,
+      "verdict": "improved"
+    },
+    {
+      "metric": "disc_detection/pct_truth_discs_recovered",
+      "baseline": 99.33,
+      "extended": 99.11,
+      "higher_is_better": true,
+      "delta": -0.22,
+      "pct_change": -0.221,
+      "verdict": "worsened"
+    }
+  ],
+  "measurement_comparisons": [
+    {
+      "metric": "measurement_mae/ap_extent_mm",
+      "baseline": 2.1284,
+      "extended": 1.9865,
+      "higher_is_better": false,
+      "delta": -0.1419,
+      "pct_change": -6.667,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_r/ap_extent_mm",
+      "baseline": 0.7651,
+      "extended": 0.7766,
+      "higher_is_better": true,
+      "delta": 0.0115,
+      "pct_change": 1.503,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_mae/area_mm2",
+      "baseline": 27.0315,
+      "extended": 25.3431,
+      "higher_is_better": false,
+      "delta": -1.6884,
+      "pct_change": -6.246,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_r/area_mm2",
+      "baseline": 0.8895,
+      "extended": 0.9079,
+      "higher_is_better": true,
+      "delta": 0.0184,
+      "pct_change": 2.069,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_mae/canal_width_at_disc_mm",
+      "baseline": 1.1614,
+      "extended": 1.1298,
+      "higher_is_better": false,
+      "delta": -0.0316,
+      "pct_change": -2.721,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_r/canal_width_at_disc_mm",
+      "baseline": 0.7936,
+      "extended": 0.8107,
+      "higher_is_better": true,
+      "delta": 0.0171,
+      "pct_change": 2.155,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_mae/disc_to_vertebra_height_ratio",
+      "baseline": 0.1341,
+      "extended": 0.1361,
+      "higher_is_better": false,
+      "delta": 0.002,
+      "pct_change": 1.491,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "measurement_r/disc_to_vertebra_height_ratio",
+      "baseline": 0.6265,
+      "extended": 0.6467,
+      "higher_is_better": true,
+      "delta": 0.0202,
+      "pct_change": 3.224,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_mae/height_mm_anterior",
+      "baseline": 0.9559,
+      "extended": 0.878,
+      "higher_is_better": false,
+      "delta": -0.0779,
+      "pct_change": -8.149,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_r/height_mm_anterior",
+      "baseline": 0.8306,
+      "extended": 0.8535,
+      "higher_is_better": true,
+      "delta": 0.0229,
+      "pct_change": 2.757,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_mae/height_mm_central",
+      "baseline": 0.8476,
+      "extended": 0.8065,
+      "higher_is_better": false,
+      "delta": -0.0411,
+      "pct_change": -4.849,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_r/height_mm_central",
+      "baseline": 0.8715,
+      "extended": 0.8875,
+      "higher_is_better": true,
+      "delta": 0.016,
+      "pct_change": 1.836,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_mae/height_mm_posterior",
+      "baseline": 0.7493,
+      "extended": 0.7531,
+      "higher_is_better": false,
+      "delta": 0.0038,
+      "pct_change": 0.507,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "measurement_r/height_mm_posterior",
+      "baseline": 0.7531,
+      "extended": 0.7478,
+      "higher_is_better": true,
+      "delta": -0.0053,
+      "pct_change": -0.704,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "measurement_mae/height_ratio_to_series_median",
+      "baseline": 0.1247,
+      "extended": 0.1186,
+      "higher_is_better": false,
+      "delta": -0.0061,
+      "pct_change": -4.892,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_r/height_ratio_to_series_median",
+      "baseline": 0.8124,
+      "extended": 0.8356,
+      "higher_is_better": true,
+      "delta": 0.0232,
+      "pct_change": 2.856,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_mae/intensity_disc_vertebra_ratio",
+      "baseline": 0.0369,
+      "extended": 0.036,
+      "higher_is_better": false,
+      "delta": -0.0009,
+      "pct_change": -2.439,
+      "verdict": "improved"
+    },
+    {
+      "metric": "measurement_r/intensity_disc_vertebra_ratio",
+      "baseline": 0.9609,
+      "extended": 0.9638,
+      "higher_is_better": true,
+      "delta": 0.0029,
+      "pct_change": 0.302,
+      "verdict": "improved"
+    },
+    {
+      "metric": "end_to_end_pfirrmann/logreg/quadratic_weighted_kappa",
+      "baseline": 0.6195,
+      "extended": 0.6123,
+      "higher_is_better": true,
+      "delta": -0.0072,
+      "pct_change": -1.162,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "end_to_end_pfirrmann/logreg/mae",
+      "baseline": 0.9147,
+      "extended": 0.9,
+      "higher_is_better": false,
+      "delta": -0.0147,
+      "pct_change": -1.607,
+      "verdict": "improved"
+    },
+    {
+      "metric": "end_to_end_pfirrmann/logreg/within_one_grade",
+      "baseline": 0.8104,
+      "extended": 0.8,
+      "higher_is_better": true,
+      "delta": -0.0104,
+      "pct_change": -1.283,
+      "verdict": "worsened"
+    },
+    {
+      "metric": "end_to_end_pfirrmann/forest/quadratic_weighted_kappa",
+      "baseline": 0.6294,
+      "extended": 0.6375,
+      "higher_is_better": true,
+      "delta": 0.0081,
+      "pct_change": 1.287,
+      "verdict": "improved"
+    },
+    {
+      "metric": "end_to_end_pfirrmann/forest/mae",
+      "baseline": 0.8057,
+      "extended": 0.8,
+      "higher_is_better": false,
+      "delta": -0.0057,
+      "pct_change": -0.707,
+      "verdict": "improved"
+    },
+    {
+      "metric": "end_to_end_pfirrmann/forest/within_one_grade",
+      "baseline": 0.8389,
+      "extended": 0.8429,
+      "higher_is_better": true,
+      "delta": 0.004,
+      "pct_change": 0.477,
+      "verdict": "improved"
+    }
+  ],
+  "finding_comparisons": [],
+  "decision": {
+    "macro_foreground_dice_baseline": 0.8952577340959645,
+    "macro_foreground_dice_extended": 0.8979280635764421,
+    "delta": 0.00267,
+    "threshold": 0.005,
+    "dice_change_meaningful": false,
+    "disc_index_accuracy_baseline": 78.4,
+    "disc_index_accuracy_extended": 82.6,
+    "disc_index_accuracy_delta_pp": 4.2,
+    "index_threshold_pp": 1.0,
+    "index_change_meaningful": true,
+    "meaningful_change": true,
+    "verdict": "improved",
+    "disc_level_rerun_justified": true,
+    "reason": "|delta macro foreground Dice| = 0.0027 < threshold 0.005; |delta disc-index accuracy| = 4.20 pp >= threshold 1.0 pp"
+  },
+  "test_set_note": "The test set was evaluated only after training finished and only with the checkpoint selected on validation foreground Dice."
+}

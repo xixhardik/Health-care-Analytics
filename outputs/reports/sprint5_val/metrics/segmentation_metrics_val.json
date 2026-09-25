@@ -1,0 +1,165 @@
+{
+  "n_slices": 1632,
+  "n_pixels": 147062784,
+  "pixel_accuracy": 0.9899734252276905,
+  "aggregate": {
+    "per_class": {
+      "background": {
+        "class_id": 0,
+        "dice": 0.9947644376756622,
+        "iou": 0.9895834120467607,
+        "precision": 0.9946060740717131,
+        "recall": 0.9949228517177207,
+        "support_pixels_true": 139129086,
+        "support_pixels_pred": 139173398,
+        "tp": 138422707,
+        "fp": 750691,
+        "fn": 706379
+      },
+      "vertebra": {
+        "class_id": 1,
+        "dice": 0.9110405915520088,
+        "iou": 0.8366157493881649,
+        "precision": 0.9150143737108224,
+        "recall": 0.9071011753304379,
+        "support_pixels_true": 5704098,
+        "support_pixels_pred": 5654768,
+        "tp": 5174194,
+        "fp": 480574,
+        "fn": 529904
+      },
+      "intervertebral_disc": {
+        "class_id": 2,
+        "dice": 0.8752783889438378,
+        "iou": 0.7782178099360192,
+        "precision": 0.8823865573008786,
+        "recall": 0.868283826785765,
+        "support_pixels_true": 1198562,
+        "support_pixels_pred": 1179406,
+        "tp": 1040692,
+        "fp": 138714,
+        "fn": 157870
+      },
+      "spinal_canal": {
+        "class_id": 3,
+        "dice": 0.9113529059316956,
+        "iou": 0.8371426432839172,
+        "precision": 0.9009137500331686,
+        "recall": 0.9220368211452924,
+        "support_pixels_true": 1031038,
+        "support_pixels_pred": 1055212,
+        "tp": 950655,
+        "fp": 104557,
+        "fn": 80383
+      }
+    },
+    "macro_all_classes": {
+      "dice": 0.9231090810258011,
+      "iou": 0.8603899036637155,
+      "precision": 0.9232301887791456,
+      "recall": 0.923086168744804
+    },
+    "macro_foreground": {
+      "dice": 0.8992239621425141,
+      "iou": 0.817325400869367,
+      "precision": 0.8994382270149566,
+      "recall": 0.8991406077538318
+    }
+  },
+  "per_slice_mean": {
+    "per_class": {
+      "background": {
+        "class_id": 0,
+        "n_slices_counted": 1632,
+        "dice": 0.9945826544755431,
+        "dice_n_defined": 1632,
+        "iou": 0.9892613590618328,
+        "iou_n_defined": 1632,
+        "precision": 0.9944416764684751,
+        "precision_n_defined": 1632,
+        "recall": 0.9947341446158583,
+        "recall_n_defined": 1632
+      },
+      "vertebra": {
+        "class_id": 1,
+        "n_slices_counted": 1632,
+        "dice": 0.8180625259912395,
+        "dice_n_defined": 1632,
+        "iou": 0.7233877603194151,
+        "iou_n_defined": 1632,
+        "precision": 0.8634564340348583,
+        "precision_n_defined": 1624,
+        "recall": 0.8064819083024753,
+        "recall_n_defined": 1632
+      },
+      "intervertebral_disc": {
+        "class_id": 2,
+        "n_slices_counted": 1249,
+        "dice": 0.7977333640998019,
+        "dice_n_defined": 1249,
+        "iou": 0.7020900592283751,
+        "iou_n_defined": 1249,
+        "precision": 0.8402245443174338,
+        "precision_n_defined": 1219,
+        "recall": 0.8152615441009244,
+        "recall_n_defined": 1232
+      },
+      "spinal_canal": {
+        "class_id": 3,
+        "n_slices_counted": 654,
+        "dice": 0.787665717487992,
+        "dice_n_defined": 654,
+        "iou": 0.7100277114279804,
+        "iou_n_defined": 654,
+        "precision": 0.837877228134688,
+        "precision_n_defined": 616,
+        "recall": 0.8207279085853946,
+        "recall_n_defined": 644
+      }
+    },
+    "macro_all_classes": {
+      "dice": 0.8495110655136442,
+      "iou": 0.7811917225094008,
+      "precision": 0.8839999707388637,
+      "recall": 0.8593013764011632
+    },
+    "macro_foreground": {
+      "dice": 0.8011538691930111,
+      "iou": 0.7118351769919236,
+      "precision": 0.8471860688289933,
+      "recall": 0.8141571203295981
+    }
+  },
+  "split": "val",
+  "n_patients": 33,
+  "checkpoint": "outputs\\checkpoints\\sprint3_coverage\\best_val_dice.pt",
+  "checkpoint_metadata": {
+    "epoch": 29,
+    "val_fg_dice": 0.8983064221268103,
+    "val_loss": 0.1337073937058449,
+    "selection": "best validation foreground Dice"
+  },
+  "model": "UNet(in=1, classes=4, base=16, depth=4, bilinear=True) 1,963,860 params",
+  "per_patient_dice": {
+    "background": {
+      "mean_dice": 0.9947304327645998,
+      "std_dice": 0.0017023782996586241,
+      "n_patients": 33
+    },
+    "vertebra": {
+      "mean_dice": 0.9117741175582352,
+      "std_dice": 0.021660544078234357,
+      "n_patients": 33
+    },
+    "intervertebral_disc": {
+      "mean_dice": 0.8773926148155198,
+      "std_dice": 0.043014427417613375,
+      "n_patients": 33
+    },
+    "spinal_canal": {
+      "mean_dice": 0.90585566044623,
+      "std_dice": 0.023649602415953538,
+      "n_patients": 33
+    }
+  }
+}

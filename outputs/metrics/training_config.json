@@ -1,0 +1,36 @@
+{
+  "epochs": 12,
+  "batch_size": 8,
+  "lr": 0.001,
+  "base_channels": 16,
+  "depth": 4,
+  "downsample": 1,
+  "input_size": [
+    352,
+    256
+  ],
+  "augment": true,
+  "seed": 42,
+  "loss": "CrossEntropy + soft Dice (equal weight)",
+  "optimiser": "Adam",
+  "scheduler": "CosineAnnealingLR",
+  "model": "UNet(in=1, classes=4, base=16, depth=4, bilinear=True) 1,963,860 params",
+  "n_parameters": {
+    "total": 1963860,
+    "trainable": 1963860
+  },
+  "device": "cpu",
+  "memory_format": "channels_last",
+  "slices_used": {
+    "train": 2560,
+    "val": 800,
+    "test": 800
+  },
+  "patients_used": {
+    "train": 152,
+    "val": 33,
+    "test": 33
+  },
+  "selection_metric": "validation macro foreground Dice",
+  "note": "Slice caps and width 16 are CPU-budget decisions, measured: 3.99 img/s train, 12.93 img/s inference at 352x256 with channels_last. Sprint 1 data and split are unmodified."
+}

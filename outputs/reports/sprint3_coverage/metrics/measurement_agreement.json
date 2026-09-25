@@ -1,0 +1,159 @@
+{
+  "detection": {
+    "n_series_with_predictions": 64,
+    "n_truth_discs": 447,
+    "n_predicted_discs": 465,
+    "n_matched_by_identity": 444,
+    "pct_truth_discs_recovered": 99.33,
+    "n_predicted_not_in_truth": 21,
+    "n_truth_not_recovered": 3
+  },
+  "measurement_agreement": [
+    {
+      "measurement": "height_mm_central",
+      "unit": "mm",
+      "n": 444,
+      "gt_mean": 7.0535,
+      "pred_mean": 7.463,
+      "bias": 0.4095,
+      "mae": 0.7634,
+      "rmse": 1.2145,
+      "p90_abs_error": 1.6188,
+      "pearson_r": 0.887,
+      "spearman_r": 0.8943,
+      "mae_pct_of_gt_mean": 10.82
+    },
+    {
+      "measurement": "height_mm_anterior",
+      "unit": "mm",
+      "n": 444,
+      "gt_mean": 6.526,
+      "pred_mean": 6.7396,
+      "bias": 0.2135,
+      "mae": 0.8425,
+      "rmse": 1.3446,
+      "p90_abs_error": 1.8821,
+      "pearson_r": 0.8437,
+      "spearman_r": 0.856,
+      "mae_pct_of_gt_mean": 12.91
+    },
+    {
+      "measurement": "height_mm_posterior",
+      "unit": "mm",
+      "n": 444,
+      "gt_mean": 4.8589,
+      "pred_mean": 5.1427,
+      "bias": 0.2837,
+      "mae": 0.7399,
+      "rmse": 1.0306,
+      "p90_abs_error": 1.6976,
+      "pearson_r": 0.7614,
+      "spearman_r": 0.7514,
+      "mae_pct_of_gt_mean": 15.23
+    },
+    {
+      "measurement": "area_mm2",
+      "unit": "mm2",
+      "n": 444,
+      "gt_mean": 213.2342,
+      "pred_mean": 227.6914,
+      "bias": 14.4572,
+      "mae": 24.8986,
+      "rmse": 39.617,
+      "p90_abs_error": 55.7,
+      "pearson_r": 0.8946,
+      "spearman_r": 0.903,
+      "mae_pct_of_gt_mean": 11.68
+    },
+    {
+      "measurement": "ap_extent_mm",
+      "unit": "mm",
+      "n": 444,
+      "gt_mean": 33.7185,
+      "pred_mean": 34.4392,
+      "bias": 0.7207,
+      "mae": 1.9955,
+      "rmse": 3.5546,
+      "p90_abs_error": 4.0,
+      "pearson_r": 0.7712,
+      "spearman_r": 0.8196,
+      "mae_pct_of_gt_mean": 5.92
+    },
+    {
+      "measurement": "height_ratio_to_series_median",
+      "unit": "ratio",
+      "n": 444,
+      "gt_mean": 1.038,
+      "pred_mean": 1.0331,
+      "bias": -0.0049,
+      "mae": 0.1123,
+      "rmse": 0.1666,
+      "p90_abs_error": 0.2623,
+      "pearson_r": 0.8481,
+      "spearman_r": 0.8472,
+      "mae_pct_of_gt_mean": 10.82
+    },
+    {
+      "measurement": "disc_to_vertebra_height_ratio",
+      "unit": "ratio",
+      "n": 444,
+      "gt_mean": 0.1908,
+      "pred_mean": 0.3259,
+      "bias": 0.1351,
+      "mae": 0.1372,
+      "rmse": 0.1757,
+      "p90_abs_error": 0.2825,
+      "pearson_r": 0.675,
+      "spearman_r": 0.6797,
+      "mae_pct_of_gt_mean": 71.87
+    },
+    {
+      "measurement": "canal_width_at_disc_mm",
+      "unit": "mm",
+      "n": 444,
+      "gt_mean": 11.1456,
+      "pred_mean": 11.3839,
+      "bias": 0.2383,
+      "mae": 1.1513,
+      "rmse": 1.5785,
+      "p90_abs_error": 2.4932,
+      "pearson_r": 0.8065,
+      "spearman_r": 0.7966,
+      "mae_pct_of_gt_mean": 10.33
+    },
+    {
+      "measurement": "intensity_disc_vertebra_ratio",
+      "unit": "ratio",
+      "n": 444,
+      "gt_mean": 0.3956,
+      "pred_mean": 0.3933,
+      "bias": -0.0023,
+      "mae": 0.0364,
+      "rmse": 0.0538,
+      "p90_abs_error": 0.0873,
+      "pearson_r": 0.9639,
+      "spearman_r": 0.9552,
+      "mae_pct_of_gt_mean": 9.2
+    }
+  ],
+  "end_to_end_pfirrmann": {
+    "note": "Fitted on ground-truth-mask features from training patients, evaluated on predicted-mask features from test patients. Includes segmentation error, unlike the Stage E report.",
+    "features": "geometric+intensity",
+    "n_train_discs": 1036,
+    "logreg": {
+      "n_test_discs": 210,
+      "quadratic_weighted_kappa": 0.6038,
+      "mae": 0.881,
+      "exact_agreement": 0.3714,
+      "within_one_grade": 0.8143
+    },
+    "forest": {
+      "n_test_discs": 210,
+      "quadratic_weighted_kappa": 0.6317,
+      "mae": 0.7762,
+      "exact_agreement": 0.4381,
+      "within_one_grade": 0.8333
+    }
+  },
+  "interpretation": "Measurements are compared only for discs whose identity the prediction recovered correctly. Discs the segmentation missed or mis-numbered are counted in 'detection' instead - they are a detection failure, not a measurement error, and averaging them into the measurement error would conflate the two."
+}

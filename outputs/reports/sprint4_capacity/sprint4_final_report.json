@@ -1,0 +1,5480 @@
+{
+  "experiment": "sprint4_capacity",
+  "verification": {
+    "artefacts_present": {
+      "history.csv": true,
+      "history.json": true,
+      "last.pt": true,
+      "best_val_dice.pt": true,
+      "best_val_loss.pt": true,
+      "training_config.json": true,
+      "training_summary.json": true,
+      "smoke_test.json": true
+    },
+    "missing_artefacts": [],
+    "training_completed": true,
+    "epochs_in_history": 30,
+    "epochs_reported": 30,
+    "history_matches_summary": true,
+    "stopped_early": false,
+    "stop_reason": "reached the maximum of 30 epochs without triggering early stopping",
+    "test_set_used_during_training": false
+  },
+  "config": {
+    "experiment": "sprint4_capacity",
+    "controlled_variable": "model capacity (U-Net base channels 16 -> 32)",
+    "changed": {
+      "base_channels": {
+        "from": 16,
+        "to": 32
+      },
+      "parameters": {
+        "from": 1963860,
+        "to": 7849124,
+        "ratio": 3.997
+      },
+      "batch_size": {
+        "from": 8,
+        "to": 2,
+        "status": "co-varying dependency, not an independent choice",
+        "rationale": "Width 32 at batch 8 was measured in the Sprint 3 audit at ~3,834 MB peak commit (1.5x the memory-proven level) and 80 h for 30 full-coverage epochs. At batch 2 it needs ~1,823 MB, below the proven width-16/batch-8 level of ~2,534 MB, and ~16.9 h for 30 rotating epochs. Batch 2 is what makes width 32 runnable on this hardware."
+      }
+    },
+    "unchanged_from_sprint3_coverage": {
+      "topology": "plain U-Net, BatchNorm, bilinear upsampling",
+      "depth": 4,
+      "bilinear": true,
+      "sampler": "rotating shard sampler",
+      "slices_per_epoch": 2284,
+      "coverage_pct_over_run": 100.0,
+      "epochs_to_full_coverage": 4,
+      "optimiser": "Adam",
+      "lr": 0.001,
+      "scheduler": "CosineAnnealingLR(T_max=30)",
+      "loss": "CrossEntropy + soft Dice (equal weight)",
+      "augmentation": "translate +/-5% + intensity jitter, train only",
+      "preprocessing": "Sprint 1 slices, 352x256 at 1.0 mm/px",
+      "seed": 42,
+      "split": "Sprint 1 patient-level",
+      "validation_slices": 800,
+      "n_classes": 4,
+      "input_size": [
+        352,
+        256
+      ],
+      "memory_format": "channels_last",
+      "bf16_autocast": false,
+      "early_stopping": {
+        "monitor": "val_fg_dice",
+        "patience": 6,
+        "min_delta": 0.001
+      }
+    },
+    "different_by_design": {
+      "initialisation": "random. NOT resumed from Sprint 3, NOT warm-started from Sprint 2 - the layer shapes differ, and warm-starting would confound the capacity variable.",
+      "validation_batch_size": "2 rather than Sprint 3's 8. Verified in the smoke test to leave the validation Dice bit-identical: BatchNorm runs in eval mode and the confusion matrix accumulates over the full 800 slices, so the metric stays directly comparable to Sprint 3's 0.89831."
+    },
+    "architecture": "UNet(in=1, classes=4, base=32, depth=4, bilinear=True) 7,849,124 params",
+    "parameters": {
+      "total": 7849124,
+      "trainable": 7849124
+    },
+    "sampler_verification": {
+      "leakage_free": true,
+      "violations": 0,
+      "val_test_patients_excluded": 66,
+      "coverage": {
+        "strategy": "rotating",
+        "n_epochs_simulated": 30,
+        "slices_per_epoch_requested": 2284,
+        "slices_per_epoch_actual": 2284,
+        "train_slices_total": 9128,
+        "unique_slices_seen": 9128,
+        "coverage_pct": 100.0,
+        "slices_never_seen": 0,
+        "epochs_to_full_coverage": 4,
+        "times_seen": {
+          "min": 7,
+          "mean": 7.51,
+          "max": 8,
+          "std": 0.5
+        }
+      }
+    },
+    "reference_results": {
+      "sprint3_coverage": {
+        "val_fg_dice": 0.89831,
+        "test_macro_fg_dice": 0.90001,
+        "test_vertebra_dice": 0.91663,
+        "test_ivd_dice": 0.87827,
+        "test_canal_dice": 0.90514,
+        "disc_indexing_pct_evaluate_unet": 84.42,
+        "disc_indexing_pct_taxonomy": 84.08,
+        "pfirrmann_qwk": 0.6317,
+        "base_channels": 16,
+        "batch_size": 8,
+        "params": 1963860,
+        "epochs_completed": 29,
+        "wall_hours": 5.88,
+        "mean_epoch_seconds": 730.2
+      },
+      "sprint2_extended": {
+        "val_fg_dice": 0.8985,
+        "test_macro_fg_dice": 0.8979,
+        "test_vertebra_dice": 0.9133,
+        "test_ivd_dice": 0.8779,
+        "test_canal_dice": 0.9026,
+        "disc_indexing_pct_evaluate_unet": 82.6,
+        "pfirrmann_qwk": 0.6375
+      }
+    },
+    "smoke_test": {
+      "verdict": "PASS",
+      "n_passed": 25,
+      "n_failed": 0,
+      "projected_30_epoch_hours": 16.4,
+      "peak_commit_mb": 1931.4
+    },
+    "test_set_used_during_training": false,
+    "device": "cpu",
+    "resume": {
+      "mode": "fresh_random_init",
+      "resumed_at_epoch": 0
+    }
+  },
+  "smoke_test": {
+    "experiment": "sprint4_capacity_smoke",
+    "purpose": "feasibility and throughput check before the full run",
+    "test_set_used": false,
+    "device": "cpu",
+    "torch_version": "2.13.0+cpu",
+    "torch_threads": 12,
+    "cuda_available": false,
+    "architecture": "UNet(in=1, classes=4, base=32, depth=4, bilinear=True) 7,849,124 params",
+    "base_channels": 32,
+    "depth": 4,
+    "parameters": {
+      "total": 7849124,
+      "trainable": 7849124
+    },
+    "params_vs_sprint3": 3.997,
+    "batch_size": 2,
+    "single_step": {
+      "loss": 2.188889,
+      "global_grad_l2_norm": 3.454729
+    },
+    "throughput": {
+      "train_s_per_step": 1.5716,
+      "train_img_per_s": 1.273,
+      "infer_s_per_step": 0.4193,
+      "infer_img_per_s": 4.77,
+      "train_batches_per_epoch": 1142,
+      "val_batches_per_epoch": 400,
+      "projected_epoch_minutes": 32.7,
+      "projected_30_epoch_hours": 16.4,
+      "audit_estimate_30_epoch_hours": 16.9
+    },
+    "memory": {
+      "baseline": {
+        "rss_mb": 251.2,
+        "commit_mb": 723.4,
+        "peak_rss_mb": 251.2,
+        "peak_commit_mb": 723.4,
+        "system_available_mb": 1056.8,
+        "system_percent_used": 87.1
+      },
+      "after_training_steps": {
+        "rss_mb": 738.7,
+        "commit_mb": 1311.3,
+        "peak_rss_mb": 1139.4,
+        "peak_commit_mb": 1931.4,
+        "system_available_mb": 994.8,
+        "system_percent_used": 87.9
+      },
+      "peak_commit_mb": 1931.4,
+      "commit_minus_rss_mb": 572.6,
+      "proven_commit_mb": 2550.0,
+      "peak_commit_vs_proven": 0.757,
+      "audit_predicted_peak_commit_mb": 1822.9
+    },
+    "smoke_epochs": [
+      {
+        "epoch": 1,
+        "train_loss": 1.451197936421349,
+        "val_loss": 1.0581086313023287,
+        "val_fg_dice": 0.19323045353411852,
+        "unique_train_slices_seen": 168,
+        "cumulative_coverage_pct": 1.84,
+        "epoch_seconds": 140.2
+      },
+      {
+        "epoch": 2,
+        "train_loss": 0.8360149192522808,
+        "val_loss": 0.6459220682873446,
+        "val_fg_dice": 0.6265686904680581,
+        "unique_train_slices_seen": 335,
+        "cumulative_coverage_pct": 3.67,
+        "epoch_seconds": 144.1
+      }
+    ],
+    "validation_batch_size_invariance": {
+      "dice_batch_2": 0.6265686904680581,
+      "dice_batch_8": 0.6265686904680581,
+      "absolute_difference": 0.0
+    },
+    "checks": {
+      "no CUDA assumed (CPU-only run)": {
+        "passed": true,
+        "detail": "cuda.is_available()=False, device=cpu"
+      },
+      "model initialises at width 32": {
+        "passed": true,
+        "detail": "base_channels=32, depth=4, bilinear=True"
+      },
+      "parameter count is 4x Sprint 3 width-16 model": {
+        "passed": true,
+        "detail": "7,849,124 params vs width-16 1,963,860 (4.00x)"
+      },
+      "all parameters trainable and finite": {
+        "passed": true,
+        "detail": "trainable 7,849,124/7,849,124, no NaN/Inf"
+      },
+      "batch size 2 produces the expected batch shape": {
+        "passed": true,
+        "detail": "84 train batches, 17 val batches"
+      },
+      "test split never loaded": {
+        "passed": true,
+        "detail": "splits loaded: ['train', 'val']"
+      },
+      "input batch is (2, 1, 352, 256)": {
+        "passed": true,
+        "detail": "(2, 1, 352, 256)"
+      },
+      "forward pass output shape correct": {
+        "passed": true,
+        "detail": "(2, 4, 352, 256)"
+      },
+      "loss is finite": {
+        "passed": true,
+        "detail": "loss=2.18889 (ce=1.33406, dice=0.85483)"
+      },
+      "every parameter received a gradient": {
+        "passed": true,
+        "detail": "56 tensors with grads, 0 without"
+      },
+      "gradients finite and non-zero": {
+        "passed": true,
+        "detail": "global grad L2 norm = 3.45473"
+      },
+      "optimiser step leaves parameters finite": {
+        "passed": true,
+        "detail": "no NaN/Inf after one Adam step"
+      },
+      "throughput measured and finite": {
+        "passed": true,
+        "detail": "1.27 img/s train, 4.77 img/s infer"
+      },
+      "peak commit within the memory-proven envelope": {
+        "passed": true,
+        "detail": "1931.4 MB <= 2550 MB proven"
+      },
+      "system did not run out of memory": {
+        "passed": true,
+        "detail": "994.8 MB available"
+      },
+      "validation ran and produced a finite Dice": {
+        "passed": true,
+        "detail": "2 epochs, last val_fg_dice=0.62657"
+      },
+      "all logged epoch losses finite": {
+        "passed": true,
+        "detail": "ep1 train=1.4512 val=1.0581, ep2 train=0.8360 val=0.6459"
+      },
+      "every required per-epoch field is logged": {
+        "passed": true,
+        "detail": "missing: none"
+      },
+      "history.csv and history.json written": {
+        "passed": true,
+        "detail": "history.csv, history.json"
+      },
+      "last.pt / best_val_dice.pt written": {
+        "passed": true,
+        "detail": "last.pt 94.3 MB"
+      },
+      "per-epoch checkpoint archive written": {
+        "passed": true,
+        "detail": "2 files"
+      },
+      "checkpoint carries optimiser, scheduler, RNG, epoch, best metric": {
+        "passed": true,
+        "detail": "optimiser_state=yes, scheduler_state=yes, rng.torch=yes, rng.numpy=yes, epoch=yes, best_val_dice=yes"
+      },
+      "weights round-trip into a freshly built width-32 model": {
+        "passed": true,
+        "detail": "max |delta| = 0.00e+00"
+      },
+      "checkpoint architecture records width 32": {
+        "passed": true,
+        "detail": "{\"in_channels\": 1, \"n_classes\": 4, \"base_channels\": 32, \"depth\": 4, \"bilinear\": true}"
+      },
+      "validation Dice identical at batch 2 and batch 8": {
+        "passed": true,
+        "detail": "batch2=0.62656869, batch8=0.62656869, delta=0.00e+00"
+      }
+    },
+    "n_passed": 25,
+    "n_failed": 0,
+    "verdict": "PASS"
+  },
+  "training_summary": {
+    "experiment": "sprint4_capacity",
+    "controlled_variable": "model capacity (U-Net base channels 16 -> 32)",
+    "resume": {
+      "mode": "fresh_random_init",
+      "resumed_at_epoch": 0
+    },
+    "architecture": "UNet(in=1, classes=4, base=32, depth=4, bilinear=True) 7,849,124 params",
+    "base_channels": 32,
+    "parameters": {
+      "total": 7849124,
+      "trainable": 7849124
+    },
+    "batch_size": 2,
+    "epochs_completed": 30,
+    "max_epochs": 30,
+    "stopped_early": false,
+    "stop_reason": "reached the maximum of 30 epochs without triggering early stopping",
+    "epochs_without_improvement_at_end": 4,
+    "best_val_dice": 0.8936641561300577,
+    "best_val_dice_epoch": 26,
+    "best_val_loss": 0.15270469012670218,
+    "best_val_loss_epoch": 29,
+    "unique_train_slices_seen": 9128,
+    "train_slices_available": 9128,
+    "coverage_pct_achieved": 100.0,
+    "wall_seconds": 59290.3,
+    "wall_minutes": 988.2,
+    "wall_hours": 16.47,
+    "mean_epoch_seconds": 1976.0,
+    "min_epoch_seconds": 1872.1,
+    "max_epoch_seconds": 2286.2,
+    "restored_checkpoint": {
+      "criterion": "val_dice",
+      "path": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint4_capacity\\best_val_dice.pt",
+      "metadata": {
+        "epoch": 26,
+        "val_fg_dice": 0.8936641561300577,
+        "val_loss": 0.15591194221749902,
+        "selection": "best validation foreground Dice"
+      }
+    },
+    "comparison_vs_sprint3_coverage": {
+      "sprint3_best_val_fg_dice": 0.89831,
+      "sprint4_best_val_fg_dice": 0.8936641561300577,
+      "delta": -0.00465,
+      "exceeded": false,
+      "exceeded_by_min_delta": false
+    },
+    "comparison_vs_sprint2_extended": {
+      "sprint2_extended_best_val_fg_dice": 0.8985,
+      "delta": -0.00484
+    },
+    "cost_vs_sprint3": {
+      "sprint3_mean_epoch_seconds": 730.2,
+      "sprint4_mean_epoch_seconds": 1976.0,
+      "slowdown_factor": 2.71,
+      "sprint3_wall_hours": 5.88,
+      "sprint4_wall_hours": 16.47
+    },
+    "test_set_used_during_training": false
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "learning_rate": 0.001,
+      "n_train_slices_this_epoch": 2327,
+      "unique_train_slices_seen": 2327,
+      "train_loss": 0.500555535430859,
+      "train_ce": 0.1212744507121814,
+      "train_dice_loss": 0.3792810853144677,
+      "train_fg_dice": 0.6769571806241931,
+      "val_loss": 0.599769021756947,
+      "val_fg_dice": 0.6499923148921555,
+      "val_fg_iou": 0.4846229322785935,
+      "val_fg_precision": 0.9354449014295472,
+      "val_fg_recall": 0.5033239008381482,
+      "val_dice_vertebra": 0.6375000173652353,
+      "val_dice_intervertebral_disc": 0.7310709112867525,
+      "val_dice_spinal_canal": 0.5814060160244785,
+      "val_dice_background": 0.9848006960968254,
+      "train_seconds": 1917.6,
+      "val_seconds": 174.4,
+      "epoch_seconds": 2092.0,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 25.49
+    },
+    {
+      "epoch": 2,
+      "learning_rate": 0.0009972609476841,
+      "n_train_slices_this_epoch": 2314,
+      "unique_train_slices_seen": 4641,
+      "train_loss": 0.3259760645140114,
+      "train_ce": 0.0777373784671472,
+      "train_dice_loss": 0.2482386859409131,
+      "train_fg_dice": 0.7701163324475462,
+      "val_loss": 0.3705769646167755,
+      "val_fg_dice": 0.737602667040082,
+      "val_fg_iou": 0.5848210749685259,
+      "val_fg_precision": 0.937934826688146,
+      "val_fg_recall": 0.6085906922738666,
+      "val_dice_vertebra": 0.7578121674622237,
+      "val_dice_intervertebral_disc": 0.7500478462760628,
+      "val_dice_spinal_canal": 0.7049479873819596,
+      "val_dice_background": 0.9883110663460158,
+      "train_seconds": 1798.0,
+      "val_seconds": 173.5,
+      "epoch_seconds": 1971.5,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 50.84
+    },
+    {
+      "epoch": 3,
+      "learning_rate": 0.0009890738003669,
+      "n_train_slices_this_epoch": 2253,
+      "unique_train_slices_seen": 6894,
+      "train_loss": 0.2523636779885203,
+      "train_ce": 0.0639831434985888,
+      "train_dice_loss": 0.1883805345472603,
+      "train_fg_dice": 0.8210465045175767,
+      "val_loss": 0.3118415800854563,
+      "val_fg_dice": 0.7641060082816167,
+      "val_fg_iou": 0.6242591809138349,
+      "val_fg_precision": 0.916058869776976,
+      "val_fg_recall": 0.6701456845310864,
+      "val_dice_vertebra": 0.8277249957768686,
+      "val_dice_intervertebral_disc": 0.8082957998488377,
+      "val_dice_spinal_canal": 0.6562972292191436,
+      "val_dice_background": 0.9902863983056844,
+      "train_seconds": 1750.5,
+      "val_seconds": 168.2,
+      "epoch_seconds": 1918.6,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 75.53
+    },
+    {
+      "epoch": 4,
+      "learning_rate": 0.0009755282581475,
+      "n_train_slices_this_epoch": 2234,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.2370193432633003,
+      "train_ce": 0.0585386966941494,
+      "train_dice_loss": 0.1784806468173021,
+      "train_fg_dice": 0.831048420228096,
+      "val_loss": 0.2144229008629918,
+      "val_fg_dice": 0.8479794790570692,
+      "val_fg_iou": 0.736512766456166,
+      "val_fg_precision": 0.843807502035292,
+      "val_fg_recall": 0.8536849093410407,
+      "val_dice_vertebra": 0.8697484590390143,
+      "val_dice_intervertebral_disc": 0.8489722787027157,
+      "val_dice_spinal_canal": 0.8252176994294773,
+      "val_dice_background": 0.9924178432644184,
+      "train_seconds": 1775.5,
+      "val_seconds": 171.3,
+      "epoch_seconds": 1946.8,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 5,
+      "learning_rate": 0.0009567727288213,
+      "n_train_slices_this_epoch": 2327,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.197997899250362,
+      "train_ce": 0.0472842962322924,
+      "train_dice_loss": 0.1507136030947455,
+      "train_fg_dice": 0.8578043147853597,
+      "val_loss": 0.2059417621605098,
+      "val_fg_dice": 0.8641887141367173,
+      "val_fg_iou": 0.7610435791500727,
+      "val_fg_precision": 0.866233363679485,
+      "val_fg_recall": 0.8624714548499054,
+      "val_dice_vertebra": 0.8807104214595651,
+      "val_dice_intervertebral_disc": 0.8558387092230548,
+      "val_dice_spinal_canal": 0.8560170117275319,
+      "val_dice_background": 0.9930078792652964,
+      "train_seconds": 1810.3,
+      "val_seconds": 167.6,
+      "epoch_seconds": 1977.9,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 6,
+      "learning_rate": 0.0009330127018922,
+      "n_train_slices_this_epoch": 2314,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.2053481069946454,
+      "train_ce": 0.0473186345013299,
+      "train_dice_loss": 0.1580294724054756,
+      "train_fg_dice": 0.849671507363356,
+      "val_loss": 0.207696116445586,
+      "val_fg_dice": 0.8521436595759431,
+      "val_fg_iou": 0.7427495378990878,
+      "val_fg_precision": 0.864036806851095,
+      "val_fg_recall": 0.8468217996147196,
+      "val_dice_vertebra": 0.8735354729136549,
+      "val_dice_intervertebral_disc": 0.85020413309887,
+      "val_dice_spinal_canal": 0.8326913727153047,
+      "val_dice_background": 0.9924467689529058,
+      "train_seconds": 1774.8,
+      "val_seconds": 167.9,
+      "epoch_seconds": 1942.7,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 1,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 7,
+      "learning_rate": 0.0009045084971874,
+      "n_train_slices_this_epoch": 2253,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1988210146634659,
+      "train_ce": 0.0475452358983428,
+      "train_dice_loss": 0.1512757788013607,
+      "train_fg_dice": 0.8555064978454515,
+      "val_loss": 0.2036909858509898,
+      "val_fg_dice": 0.8582836688054055,
+      "val_fg_iou": 0.7519838957626485,
+      "val_fg_precision": 0.8867359790429861,
+      "val_fg_recall": 0.8329570656621974,
+      "val_dice_vertebra": 0.876386490467033,
+      "val_dice_intervertebral_disc": 0.8531302655187518,
+      "val_dice_spinal_canal": 0.8453342504304318,
+      "val_dice_background": 0.992938639731553,
+      "train_seconds": 1782.7,
+      "val_seconds": 174.1,
+      "epoch_seconds": 1956.7,
+      "is_best_val_dice": false,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 2,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 8,
+      "learning_rate": 0.0008715724127386,
+      "n_train_slices_this_epoch": 2234,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.178303017652024,
+      "train_ce": 0.0411511018073716,
+      "train_dice_loss": 0.1371519160569514,
+      "train_fg_dice": 0.8701497416568406,
+      "val_loss": 0.1890129164047539,
+      "val_fg_dice": 0.8713460982900895,
+      "val_fg_iou": 0.7721079713304264,
+      "val_fg_precision": 0.8843883952359234,
+      "val_fg_recall": 0.8597622816546201,
+      "val_dice_vertebra": 0.8823694952799407,
+      "val_dice_intervertebral_disc": 0.8650036108164011,
+      "val_dice_spinal_canal": 0.8666651887739267,
+      "val_dice_background": 0.993429480246172,
+      "train_seconds": 1731.0,
+      "val_seconds": 170.0,
+      "epoch_seconds": 1901.0,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 9,
+      "learning_rate": 0.0008345653031794,
+      "n_train_slices_this_epoch": 2327,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1747741597646131,
+      "train_ce": 0.0411459908949116,
+      "train_dice_loss": 0.1336281690121927,
+      "train_fg_dice": 0.8733439300205973,
+      "val_loss": 0.1868558197841048,
+      "val_fg_dice": 0.8746545738975833,
+      "val_fg_iou": 0.7774288913767752,
+      "val_fg_precision": 0.880625393337143,
+      "val_fg_recall": 0.8703756492389609,
+      "val_dice_vertebra": 0.8910102625439218,
+      "val_dice_intervertebral_disc": 0.8635759092489238,
+      "val_dice_spinal_canal": 0.8693775498999046,
+      "val_dice_background": 0.9936232869654408,
+      "train_seconds": 1804.6,
+      "val_seconds": 167.7,
+      "epoch_seconds": 1972.3,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 10,
+      "learning_rate": 0.0007938926261462,
+      "n_train_slices_this_epoch": 2314,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1893438036258146,
+      "train_ce": 0.0435999232581184,
+      "train_dice_loss": 0.1457438799154171,
+      "train_fg_dice": 0.862633810009147,
+      "val_loss": 0.1926750392653048,
+      "val_fg_dice": 0.8717172421286127,
+      "val_fg_iou": 0.7728051004837493,
+      "val_fg_precision": 0.8729896412480831,
+      "val_fg_recall": 0.8707385177232174,
+      "val_dice_vertebra": 0.8876867199055222,
+      "val_dice_intervertebral_disc": 0.8589301502298554,
+      "val_dice_spinal_canal": 0.8685348562504607,
+      "val_dice_background": 0.9934560657740448,
+      "train_seconds": 1784.5,
+      "val_seconds": 168.5,
+      "epoch_seconds": 1953.0,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 1,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 11,
+      "learning_rate": 0.00075,
+      "n_train_slices_this_epoch": 2253,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1692155158944547,
+      "train_ce": 0.0387004050351228,
+      "train_dice_loss": 0.1305151107997284,
+      "train_fg_dice": 0.876040407785981,
+      "val_loss": 0.1971107741072774,
+      "val_fg_dice": 0.8698253265222102,
+      "val_fg_iou": 0.7697429605768885,
+      "val_fg_precision": 0.8965987224419765,
+      "val_fg_recall": 0.8447788999399416,
+      "val_dice_vertebra": 0.8812052354104176,
+      "val_dice_intervertebral_disc": 0.8600973832118312,
+      "val_dice_spinal_canal": 0.8681733609443819,
+      "val_dice_background": 0.9933150541995256,
+      "train_seconds": 1725.4,
+      "val_seconds": 167.6,
+      "epoch_seconds": 1893.0,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 2,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 12,
+      "learning_rate": 0.0007033683215379,
+      "n_train_slices_this_epoch": 2234,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1704708455845833,
+      "train_ce": 0.0386148282997839,
+      "train_dice_loss": 0.1318560173283118,
+      "train_fg_dice": 0.8765261023659789,
+      "val_loss": 0.1778010066784918,
+      "val_fg_dice": 0.8793307304753634,
+      "val_fg_iou": 0.7848177902626414,
+      "val_fg_precision": 0.8841286933028453,
+      "val_fg_recall": 0.8747231881232206,
+      "val_dice_vertebra": 0.8931084952414902,
+      "val_dice_intervertebral_disc": 0.8663758318199897,
+      "val_dice_spinal_canal": 0.8785078643646106,
+      "val_dice_background": 0.9938315475039716,
+      "train_seconds": 1704.9,
+      "val_seconds": 167.1,
+      "epoch_seconds": 1872.1,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 13,
+      "learning_rate": 0.0006545084971874,
+      "n_train_slices_this_epoch": 2327,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1557690384713668,
+      "train_ce": 0.0359966092383273,
+      "train_dice_loss": 0.1197724293145452,
+      "train_fg_dice": 0.8845138476026452,
+      "val_loss": 0.1788597798720002,
+      "val_fg_dice": 0.8818109526448054,
+      "val_fg_iou": 0.788799267948287,
+      "val_fg_precision": 0.890360525342854,
+      "val_fg_recall": 0.8736319346015655,
+      "val_dice_vertebra": 0.8968123732330154,
+      "val_dice_intervertebral_disc": 0.8685622744432654,
+      "val_dice_spinal_canal": 0.8800582102581352,
+      "val_dice_background": 0.9940189536753846,
+      "train_seconds": 1782.3,
+      "val_seconds": 167.7,
+      "epoch_seconds": 1950.1,
+      "is_best_val_dice": true,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 14,
+      "learning_rate": 0.0006039558454088,
+      "n_train_slices_this_epoch": 2314,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1580335514953194,
+      "train_ce": 0.0345751686179052,
+      "train_dice_loss": 0.1234583832008012,
+      "train_fg_dice": 0.8807356837181458,
+      "val_loss": 0.1709358166158199,
+      "val_fg_dice": 0.8835939866200541,
+      "val_fg_iou": 0.7918403745170929,
+      "val_fg_precision": 0.874206791417416,
+      "val_fg_recall": 0.8949685385222222,
+      "val_dice_vertebra": 0.8993792726837975,
+      "val_dice_intervertebral_disc": 0.8612095976427435,
+      "val_dice_spinal_canal": 0.8901930895336213,
+      "val_dice_background": 0.9940791482680912,
+      "train_seconds": 1781.3,
+      "val_seconds": 174.4,
+      "epoch_seconds": 1955.8,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 15,
+      "learning_rate": 0.0005522642316338,
+      "n_train_slices_this_epoch": 2253,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.157293574290671,
+      "train_ce": 0.0358726349110788,
+      "train_dice_loss": 0.1214209393751981,
+      "train_fg_dice": 0.8827623009590978,
+      "val_loss": 0.1729626373853534,
+      "val_fg_dice": 0.8789308038245953,
+      "val_fg_iou": 0.7842518529536792,
+      "val_fg_precision": 0.8777220507993547,
+      "val_fg_recall": 0.8812860730932828,
+      "val_dice_vertebra": 0.8960950023433641,
+      "val_dice_intervertebral_disc": 0.8646613048101841,
+      "val_dice_spinal_canal": 0.8760361043202379,
+      "val_dice_background": 0.993860621933344,
+      "train_seconds": 1777.5,
+      "val_seconds": 171.0,
+      "epoch_seconds": 1948.5,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 1,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 16,
+      "learning_rate": 0.0005,
+      "n_train_slices_this_epoch": 2234,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1595276869606683,
+      "train_ce": 0.0348106039447604,
+      "train_dice_loss": 0.124717083325211,
+      "train_fg_dice": 0.885099862876702,
+      "val_loss": 0.1769795298017561,
+      "val_fg_dice": 0.8810450221198005,
+      "val_fg_iou": 0.787673200567002,
+      "val_fg_precision": 0.8693729571121279,
+      "val_fg_recall": 0.8937486055579072,
+      "val_dice_vertebra": 0.8976758870502273,
+      "val_dice_intervertebral_disc": 0.8627736827881025,
+      "val_dice_spinal_canal": 0.882685496521072,
+      "val_dice_background": 0.9939596115460432,
+      "train_seconds": 1727.1,
+      "val_seconds": 168.3,
+      "epoch_seconds": 1895.4,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 2,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 17,
+      "learning_rate": 0.0004477357683661,
+      "n_train_slices_this_epoch": 2327,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1519514656964423,
+      "train_ce": 0.0343131660044842,
+      "train_dice_loss": 0.1176382997173332,
+      "train_fg_dice": 0.8877721431010488,
+      "val_loss": 0.1740470661595463,
+      "val_fg_dice": 0.8851226583681667,
+      "val_fg_iou": 0.7941696732804155,
+      "val_fg_precision": 0.877776243542443,
+      "val_fg_recall": 0.8928474388836788,
+      "val_dice_vertebra": 0.9026340162027844,
+      "val_dice_intervertebral_disc": 0.8709787273086587,
+      "val_dice_spinal_canal": 0.8817552315930575,
+      "val_dice_background": 0.9942081352328922,
+      "train_seconds": 1853.5,
+      "val_seconds": 173.8,
+      "epoch_seconds": 2027.3,
+      "is_best_val_dice": true,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 18,
+      "learning_rate": 0.0003960441545911,
+      "n_train_slices_this_epoch": 2314,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1527814794711723,
+      "train_ce": 0.0330043408711615,
+      "train_dice_loss": 0.119777138725683,
+      "train_fg_dice": 0.8856732466927246,
+      "val_loss": 0.1697471439745277,
+      "val_fg_dice": 0.8810814449737308,
+      "val_fg_iou": 0.7877335039992305,
+      "val_fg_precision": 0.8761055049518857,
+      "val_fg_recall": 0.8862640169657433,
+      "val_dice_vertebra": 0.8984726303372752,
+      "val_dice_intervertebral_disc": 0.8633646010865522,
+      "val_dice_spinal_canal": 0.8814071034973647,
+      "val_dice_background": 0.9939704072563376,
+      "train_seconds": 1810.3,
+      "val_seconds": 173.3,
+      "epoch_seconds": 1983.6,
+      "is_best_val_dice": false,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 1,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 19,
+      "learning_rate": 0.0003454915028125,
+      "n_train_slices_this_epoch": 2253,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.147277434119958,
+      "train_ce": 0.0324390479216172,
+      "train_dice_loss": 0.1148383861430796,
+      "train_fg_dice": 0.8904666805388987,
+      "val_loss": 0.1599619679618626,
+      "val_fg_dice": 0.8889959574074683,
+      "val_fg_iou": 0.8004328470264713,
+      "val_fg_precision": 0.8906244056989387,
+      "val_fg_recall": 0.887665781324749,
+      "val_dice_vertebra": 0.9023697707459776,
+      "val_dice_intervertebral_disc": 0.8707251117941142,
+      "val_dice_spinal_canal": 0.8938929896823131,
+      "val_dice_background": 0.994298836053552,
+      "train_seconds": 1786.1,
+      "val_seconds": 178.3,
+      "epoch_seconds": 1964.4,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 20,
+      "learning_rate": 0.0002966316784621,
+      "n_train_slices_this_epoch": 2234,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.144624463820308,
+      "train_ce": 0.0319061800630637,
+      "train_dice_loss": 0.1127182839166509,
+      "train_fg_dice": 0.8921126771406825,
+      "val_loss": 0.1645331353880465,
+      "val_fg_dice": 0.8878700936650841,
+      "val_fg_iou": 0.7985752264758254,
+      "val_fg_precision": 0.8857260895693694,
+      "val_fg_recall": 0.8905213203695413,
+      "val_dice_vertebra": 0.902330625204736,
+      "val_dice_intervertebral_disc": 0.8719898945982262,
+      "val_dice_spinal_canal": 0.88928976119229,
+      "val_dice_background": 0.994274328807724,
+      "train_seconds": 1783.4,
+      "val_seconds": 181.2,
+      "epoch_seconds": 1964.6,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 1,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 21,
+      "learning_rate": 0.00025,
+      "n_train_slices_this_epoch": 2327,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1388461898903419,
+      "train_ce": 0.0309670002696751,
+      "train_dice_loss": 0.1078791896638845,
+      "train_fg_dice": 0.8962758705708785,
+      "val_loss": 0.1610346575640142,
+      "val_fg_dice": 0.8885100530566542,
+      "val_fg_iou": 0.7996100703959087,
+      "val_fg_precision": 0.8959400576921995,
+      "val_fg_recall": 0.8812545649942883,
+      "val_dice_vertebra": 0.903264777362076,
+      "val_dice_intervertebral_disc": 0.8729359959440988,
+      "val_dice_spinal_canal": 0.8893293858637878,
+      "val_dice_background": 0.9943501563160224,
+      "train_seconds": 1866.9,
+      "val_seconds": 169.1,
+      "epoch_seconds": 2035.9,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 2,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 22,
+      "learning_rate": 0.0002061073738537,
+      "n_train_slices_this_epoch": 2314,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1417991483749865,
+      "train_ce": 0.0301940357862941,
+      "train_dice_loss": 0.1116051127298597,
+      "train_fg_dice": 0.8930604256515139,
+      "val_loss": 0.1618898150231689,
+      "val_fg_dice": 0.8891969459647356,
+      "val_fg_iou": 0.8007723904809264,
+      "val_fg_precision": 0.884352441064574,
+      "val_fg_recall": 0.8944511112370984,
+      "val_dice_vertebra": 0.9039566941708196,
+      "val_dice_intervertebral_disc": 0.8709237789998716,
+      "val_dice_spinal_canal": 0.8927103647235161,
+      "val_dice_background": 0.9943323654418024,
+      "train_seconds": 1819.6,
+      "val_seconds": 168.8,
+      "epoch_seconds": 1988.4,
+      "is_best_val_dice": true,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 3,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 23,
+      "learning_rate": 0.0001654346968205,
+      "n_train_slices_this_epoch": 2253,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1375847661563362,
+      "train_ce": 0.0302308617630089,
+      "train_dice_loss": 0.1073539045310147,
+      "train_fg_dice": 0.8966156664167929,
+      "val_loss": 0.162397568654269,
+      "val_fg_dice": 0.8853877919317084,
+      "val_fg_iou": 0.7946544748362822,
+      "val_fg_precision": 0.8780542607803237,
+      "val_fg_recall": 0.8938458213566483,
+      "val_dice_vertebra": 0.9036139496321964,
+      "val_dice_intervertebral_disc": 0.8678602663435356,
+      "val_dice_spinal_canal": 0.8846891598193932,
+      "val_dice_background": 0.9942244087159376,
+      "train_seconds": 1768.2,
+      "val_seconds": 169.7,
+      "epoch_seconds": 1937.9,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 4,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 24,
+      "learning_rate": 0.0001284275872613,
+      "n_train_slices_this_epoch": 2234,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1357809845024624,
+      "train_ce": 0.0297459309475174,
+      "train_dice_loss": 0.1060350536766496,
+      "train_fg_dice": 0.8973619757518354,
+      "val_loss": 0.1601927124522626,
+      "val_fg_dice": 0.8900874597679708,
+      "val_fg_iou": 0.8022031732066139,
+      "val_fg_precision": 0.8901256471981492,
+      "val_fg_recall": 0.8903763652451673,
+      "val_dice_vertebra": 0.9051278027088528,
+      "val_dice_intervertebral_disc": 0.872712896144972,
+      "val_dice_spinal_canal": 0.8924216804500876,
+      "val_dice_background": 0.9943935118377653,
+      "train_seconds": 1735.7,
+      "val_seconds": 167.2,
+      "epoch_seconds": 1902.8,
+      "is_best_val_dice": true,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 5,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 25,
+      "learning_rate": 9.549150281252635e-05,
+      "n_train_slices_this_epoch": 2327,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1392309230112455,
+      "train_ce": 0.0300680473207108,
+      "train_dice_loss": 0.1091628756793736,
+      "train_fg_dice": 0.8994552317903969,
+      "val_loss": 0.1574268034473061,
+      "val_fg_dice": 0.8916301557388807,
+      "val_fg_iou": 0.8047278950153132,
+      "val_fg_precision": 0.8930915876437426,
+      "val_fg_recall": 0.8902971418829493,
+      "val_dice_vertebra": 0.9054494235528976,
+      "val_dice_intervertebral_disc": 0.8728734586537498,
+      "val_dice_spinal_canal": 0.8965675850099947,
+      "val_dice_background": 0.9944548311590417,
+      "train_seconds": 1783.7,
+      "val_seconds": 167.4,
+      "epoch_seconds": 1951.1,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 26,
+      "learning_rate": 6.698729810778068e-05,
+      "n_train_slices_this_epoch": 2314,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1361151166427671,
+      "train_ce": 0.0287276783035106,
+      "train_dice_loss": 0.1073874384551184,
+      "train_fg_dice": 0.897214368942362,
+      "val_loss": 0.155911942217499,
+      "val_fg_dice": 0.8936641561300577,
+      "val_fg_iou": 0.8080765976121662,
+      "val_fg_precision": 0.8975147273919569,
+      "val_fg_recall": 0.8899414948218561,
+      "val_dice_vertebra": 0.9063963998217118,
+      "val_dice_intervertebral_disc": 0.8734042324939387,
+      "val_dice_spinal_canal": 0.9011918360745226,
+      "val_dice_background": 0.994541413767452,
+      "train_seconds": 1839.0,
+      "val_seconds": 167.2,
+      "epoch_seconds": 2006.2,
+      "is_best_val_dice": true,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 0,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 27,
+      "learning_rate": 4.322727117869953e-05,
+      "n_train_slices_this_epoch": 2253,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1315657979383614,
+      "train_ce": 0.0293723512669925,
+      "train_dice_loss": 0.1021934466611852,
+      "train_fg_dice": 0.8984251941143854,
+      "val_loss": 0.1528735139500349,
+      "val_fg_dice": 0.8928670806943559,
+      "val_fg_iou": 0.8067627680747886,
+      "val_fg_precision": 0.8941788821928794,
+      "val_fg_recall": 0.8919417477289214,
+      "val_dice_vertebra": 0.9058108303604572,
+      "val_dice_intervertebral_disc": 0.8730976122327718,
+      "val_dice_spinal_canal": 0.8996927994898387,
+      "val_dice_background": 0.994496292613103,
+      "train_seconds": 1767.1,
+      "val_seconds": 164.2,
+      "epoch_seconds": 1931.3,
+      "is_best_val_dice": false,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 1,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 28,
+      "learning_rate": 2.447174185242324e-05,
+      "n_train_slices_this_epoch": 2234,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1338951309130676,
+      "train_ce": 0.0288785843192387,
+      "train_dice_loss": 0.1050165466357259,
+      "train_fg_dice": 0.89996224291022,
+      "val_loss": 0.1529735480900854,
+      "val_fg_dice": 0.8922571873851282,
+      "val_fg_iou": 0.8057721701633952,
+      "val_fg_precision": 0.8908896883688605,
+      "val_fg_recall": 0.8941757216620108,
+      "val_dice_vertebra": 0.905543813955882,
+      "val_dice_intervertebral_disc": 0.8723991638669326,
+      "val_dice_spinal_canal": 0.8988285843325697,
+      "val_dice_background": 0.9944717101829162,
+      "train_seconds": 1948.1,
+      "val_seconds": 254.3,
+      "epoch_seconds": 2202.4,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 2,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 29,
+      "learning_rate": 1.092619963309716e-05,
+      "n_train_slices_this_epoch": 2327,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1314506800452876,
+      "train_ce": 0.0290684471048894,
+      "train_dice_loss": 0.1023822329419497,
+      "train_fg_dice": 0.9012998327126432,
+      "val_loss": 0.1527046901267021,
+      "val_fg_dice": 0.8920916253087147,
+      "val_fg_iou": 0.8054985003186984,
+      "val_fg_precision": 0.8882813059791443,
+      "val_fg_recall": 0.8963170053745665,
+      "val_dice_vertebra": 0.9062413646031156,
+      "val_dice_intervertebral_disc": 0.8726603065155492,
+      "val_dice_spinal_canal": 0.8973732048074793,
+      "val_dice_background": 0.9944747533130384,
+      "train_seconds": 2113.1,
+      "val_seconds": 173.1,
+      "epoch_seconds": 2286.2,
+      "is_best_val_dice": false,
+      "is_best_val_loss": true,
+      "epochs_without_improvement": 3,
+      "cumulative_coverage_pct": 100.0
+    },
+    {
+      "epoch": 30,
+      "learning_rate": 2.7390523158633003e-06,
+      "n_train_slices_this_epoch": 2314,
+      "unique_train_slices_seen": 9128,
+      "train_loss": 0.1338037932508962,
+      "train_ce": 0.0282270556147294,
+      "train_dice_loss": 0.1055767376462034,
+      "train_fg_dice": 0.8985767754958349,
+      "val_loss": 0.1538421871699392,
+      "val_fg_dice": 0.8917809764135088,
+      "val_fg_iou": 0.804984127921475,
+      "val_fg_precision": 0.8906312553868251,
+      "val_fg_recall": 0.893473137947982,
+      "val_dice_vertebra": 0.9053625054240952,
+      "val_dice_intervertebral_disc": 0.8724884748744838,
+      "val_dice_spinal_canal": 0.8974919489419475,
+      "val_dice_background": 0.9944682888139366,
+      "train_seconds": 1782.3,
+      "val_seconds": 168.5,
+      "epoch_seconds": 1950.8,
+      "is_best_val_dice": false,
+      "is_best_val_loss": false,
+      "epochs_without_improvement": 4,
+      "cumulative_coverage_pct": 100.0
+    }
+  ],
+  "training": {
+    "total_epochs_completed": 30,
+    "max_epochs": 30,
+    "early_stopping_triggered": false,
+    "stop_reason": "reached the maximum of 30 epochs without triggering early stopping",
+    "epochs_without_improvement_at_end": 4,
+    "best_val_dice_epoch": 26,
+    "best_val_fg_dice": 0.8936641561300577,
+    "best_val_loss": 0.15270469012670218,
+    "best_val_loss_epoch": 29,
+    "final_val_fg_dice": 0.8917809764135088,
+    "final_val_loss": 0.1538421871699392,
+    "learning_rate_at_best_epoch": 6.698729810778068e-05,
+    "train_loss_at_best_dice_epoch": 0.1361151166427671,
+    "val_loss_at_best_dice_epoch": 0.155911942217499,
+    "vertebra_dice_at_best_epoch": 0.9063963998217118,
+    "ivd_dice_at_best_epoch": 0.8734042324939387,
+    "canal_dice_at_best_epoch": 0.9011918360745226,
+    "total_training_seconds": 59290.3,
+    "total_training_hours": 16.47,
+    "mean_epoch_seconds": 1976.0,
+    "min_epoch_seconds": 1872.1,
+    "max_epoch_seconds": 2286.2,
+    "parameters": 7849124,
+    "base_channels": 32,
+    "batch_size": 2
+  },
+  "coverage": {
+    "train_slices_available": 9128,
+    "unique_slices_seen_final": 9128,
+    "final_coverage_pct": 100.0,
+    "epoch_reaching_full_coverage": 4,
+    "slices_per_epoch_mean": 2285,
+    "cumulative_coverage_pct_by_epoch": [
+      25.49,
+      50.84,
+      75.53,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0
+    ],
+    "unique_slices_seen_by_epoch": [
+      2327,
+      4641,
+      6894,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128,
+      9128
+    ]
+  },
+  "convergence": {
+    "best_epoch": 26,
+    "epochs_after_best": 4,
+    "last5_epochs": [
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "last5_val_dice_min": 0.8917809764135088,
+    "last5_val_dice_max": 0.8936641561300577,
+    "last5_val_dice_spread": 0.0018831797165488329,
+    "last5_train_loss_min": 0.1314506800452876,
+    "last5_train_loss_max": 0.1361151166427671,
+    "final_train_loss": 0.1338037932508962,
+    "final_val_loss": 0.1538421871699392,
+    "train_val_loss_gap": 0.020038393919042996,
+    "min_train_loss": 0.1314506800452876,
+    "min_val_loss": 0.1527046901267021,
+    "val_loss_min_epoch": 29
+  },
+  "checkpoint": {
+    "filename": "best_val_dice.pt",
+    "path": "outputs/checkpoints/sprint4_capacity/best_val_dice.pt",
+    "selection_criterion": "best validation foreground Dice (predefined)",
+    "epoch": 26,
+    "val_fg_dice": 0.8936641561300577,
+    "val_loss": 0.15591194221749902,
+    "architecture": {
+      "in_channels": 1,
+      "n_classes": 4,
+      "base_channels": 32,
+      "depth": 4,
+      "bilinear": true
+    },
+    "size_mb": 31.5,
+    "test_used_for_selection": false,
+    "matches_summary": true
+  },
+  "test_segmentation": {
+    "n_slices": 1655,
+    "n_pixels": 149135360,
+    "pixel_accuracy": 0.990459304889196,
+    "aggregate": {
+      "per_class": {
+        "background": {
+          "class_id": 0,
+          "dice": 0.9950300490062199,
+          "iou": 0.9901092545327044,
+          "precision": 0.9945235957991673,
+          "recall": 0.9955370182905915,
+          "support_pixels_true": 141600177,
+          "support_pixels_pred": 141744468,
+          "tp": 140968218,
+          "fp": 776250,
+          "fn": 631959
+        },
+        "vertebra": {
+          "class_id": 1,
+          "dice": 0.9111270265356556,
+          "iou": 0.8367615403629914,
+          "precision": 0.9249806740782756,
+          "recall": 0.8976822339865425,
+          "support_pixels_true": 5426389,
+          "support_pixels_pred": 5266243,
+          "tp": 4871173,
+          "fp": 395070,
+          "fn": 555216
+        },
+        "intervertebral_disc": {
+          "class_id": 2,
+          "dice": 0.8731271878007227,
+          "iou": 0.7748231906462201,
+          "precision": 0.8683457594553391,
+          "recall": 0.8779615642733007,
+          "support_pixels_true": 1089247,
+          "support_pixels_pred": 1101309,
+          "tp": 956317,
+          "fp": 144992,
+          "fn": 132930
+        },
+        "spinal_canal": {
+          "class_id": 3,
+          "dice": 0.8975503784595036,
+          "iou": 0.8141418536706657,
+          "precision": 0.8958869974788438,
+          "recall": 0.8992199476826473,
+          "support_pixels_true": 1019547,
+          "support_pixels_pred": 1023340,
+          "tp": 916797,
+          "fp": 106543,
+          "fn": 102750
+        }
+      },
+      "macro_all_classes": {
+        "dice": 0.9192086604505254,
+        "iou": 0.8539589598031454,
+        "precision": 0.9209342567029065,
+        "recall": 0.9176001910582705
+      },
+      "macro_foreground": {
+        "dice": 0.8939348642652939,
+        "iou": 0.8085755282266257,
+        "precision": 0.8964044770041529,
+        "recall": 0.8916212486474969
+      }
+    },
+    "per_slice_mean": {
+      "per_class": {
+        "background": {
+          "class_id": 0,
+          "n_slices_counted": 1655,
+          "dice": 0.9948563878567855,
+          "dice_n_defined": 1655,
+          "iou": 0.9897974093495281,
+          "iou_n_defined": 1655,
+          "precision": 0.9943589024488996,
+          "precision_n_defined": 1655,
+          "recall": 0.9953641409734751,
+          "recall_n_defined": 1655
+        },
+        "vertebra": {
+          "class_id": 1,
+          "n_slices_counted": 1655,
+          "dice": 0.8149648716126197,
+          "dice_n_defined": 1655,
+          "iou": 0.7190740842741968,
+          "iou_n_defined": 1655,
+          "precision": 0.879508646660782,
+          "precision_n_defined": 1638,
+          "recall": 0.7925303791949938,
+          "recall_n_defined": 1655
+        },
+        "intervertebral_disc": {
+          "class_id": 2,
+          "n_slices_counted": 1214,
+          "dice": 0.7771647005070363,
+          "dice_n_defined": 1214,
+          "iou": 0.6805260945921761,
+          "iou_n_defined": 1214,
+          "precision": 0.8339847992987377,
+          "precision_n_defined": 1147,
+          "recall": 0.7932262455160005,
+          "recall_n_defined": 1202
+        },
+        "spinal_canal": {
+          "class_id": 3,
+          "n_slices_counted": 629,
+          "dice": 0.7452774103531495,
+          "dice_n_defined": 629,
+          "iou": 0.6645384655234201,
+          "iou_n_defined": 629,
+          "precision": 0.8192913496519798,
+          "precision_n_defined": 583,
+          "recall": 0.787593095553868,
+          "recall_n_defined": 617
+        }
+      },
+      "macro_all_classes": {
+        "dice": 0.8330658425823978,
+        "iou": 0.7634840134348302,
+        "precision": 0.8817859245150999,
+        "recall": 0.8421784653095844
+      },
+      "macro_foreground": {
+        "dice": 0.7791356608242684,
+        "iou": 0.6880462147965977,
+        "precision": 0.8442615985371665,
+        "recall": 0.7911165734216209
+      }
+    },
+    "split": "test",
+    "n_patients": 33,
+    "checkpoint": "outputs\\checkpoints\\sprint4_capacity\\best_val_dice.pt",
+    "checkpoint_metadata": {
+      "epoch": 26,
+      "val_fg_dice": 0.8936641561300577,
+      "val_loss": 0.15591194221749902,
+      "selection": "best validation foreground Dice"
+    },
+    "model": "UNet(in=1, classes=4, base=32, depth=4, bilinear=True) 7,849,124 params",
+    "per_patient_dice": {
+      "background": {
+        "mean_dice": 0.9950714548791093,
+        "std_dice": 0.001126893040047991,
+        "n_patients": 33
+      },
+      "vertebra": {
+        "mean_dice": 0.9110611348674763,
+        "std_dice": 0.019629400874375914,
+        "n_patients": 33
+      },
+      "intervertebral_disc": {
+        "mean_dice": 0.8815590002194015,
+        "std_dice": 0.03105549126159604,
+        "n_patients": 33
+      },
+      "spinal_canal": {
+        "mean_dice": 0.8960848899704423,
+        "std_dice": 0.022767876291475326,
+        "n_patients": 33
+      }
+    }
+  },
+  "reference_segmentation": {
+    "sprint3_coverage": {
+      "n_slices": 1655,
+      "n_pixels": 149135360,
+      "pixel_accuracy": 0.990920134567684,
+      "aggregate": {
+        "per_class": {
+          "background": {
+            "class_id": 0,
+            "dice": 0.9952665506224332,
+            "iou": 0.9905777012191657,
+            "precision": 0.9953746299607197,
+            "recall": 0.9951584947524466,
+            "support_pixels_true": 141600177,
+            "support_pixels_pred": 141569430,
+            "tp": 140914619,
+            "fp": 654811,
+            "fn": 685558
+          },
+          "vertebra": {
+            "class_id": 1,
+            "dice": 0.9166250421944594,
+            "iou": 0.8460829148674011,
+            "precision": 0.9194995630096019,
+            "recall": 0.9137684379059444,
+            "support_pixels_true": 5426389,
+            "support_pixels_pred": 5392567,
+            "tp": 4958463,
+            "fp": 434104,
+            "fn": 467926
+          },
+          "intervertebral_disc": {
+            "class_id": 2,
+            "dice": 0.8782746012285413,
+            "iou": 0.7829675624626573,
+            "precision": 0.8620828385415055,
+            "recall": 0.8950862384748363,
+            "support_pixels_true": 1089247,
+            "support_pixels_pred": 1130947,
+            "tp": 974970,
+            "fp": 155977,
+            "fn": 114277
+          },
+          "spinal_canal": {
+            "class_id": 3,
+            "dice": 0.9051365131188096,
+            "iou": 0.8267117535330054,
+            "precision": 0.8952078632714771,
+            "recall": 0.9152878680433565,
+            "support_pixels_true": 1019547,
+            "support_pixels_pred": 1042416,
+            "tp": 933179,
+            "fp": 109237,
+            "fn": 86368
+          }
+        },
+        "macro_all_classes": {
+          "dice": 0.9238256767910609,
+          "iou": 0.8615849830205573,
+          "precision": 0.9180412236958261,
+          "recall": 0.929825259794146
+        },
+        "macro_foreground": {
+          "dice": 0.9000120521806035,
+          "iou": 0.8185874102876879,
+          "precision": 0.8922634216075281,
+          "recall": 0.9080475148080458
+        }
+      },
+      "per_slice_mean": {
+        "per_class": {
+          "background": {
+            "class_id": 0,
+            "n_slices_counted": 1655,
+            "dice": 0.9951021646124847,
+            "dice_n_defined": 1655,
+            "iou": 0.9902804540707708,
+            "iou_n_defined": 1655,
+            "precision": 0.9952326666757502,
+            "precision_n_defined": 1655,
+            "recall": 0.9949800663084808,
+            "recall_n_defined": 1655
+          },
+          "vertebra": {
+            "class_id": 1,
+            "n_slices_counted": 1655,
+            "dice": 0.8184387490358426,
+            "dice_n_defined": 1655,
+            "iou": 0.724680117483542,
+            "iou_n_defined": 1655,
+            "precision": 0.8591737769601084,
+            "precision_n_defined": 1643,
+            "recall": 0.8117044854830416,
+            "recall_n_defined": 1655
+          },
+          "intervertebral_disc": {
+            "class_id": 2,
+            "n_slices_counted": 1223,
+            "dice": 0.7831466333561006,
+            "dice_n_defined": 1223,
+            "iou": 0.6890506764579242,
+            "iou_n_defined": 1223,
+            "precision": 0.8166850860853632,
+            "precision_n_defined": 1169,
+            "recall": 0.8213307343076921,
+            "recall_n_defined": 1202
+          },
+          "spinal_canal": {
+            "class_id": 3,
+            "n_slices_counted": 628,
+            "dice": 0.7592727793063095,
+            "dice_n_defined": 628,
+            "iou": 0.6800672480744835,
+            "iou_n_defined": 628,
+            "precision": 0.8235970711684113,
+            "precision_n_defined": 592,
+            "recall": 0.8021824976826318,
+            "recall_n_defined": 617
+          }
+        },
+        "macro_all_classes": {
+          "dice": 0.8389900815776843,
+          "iou": 0.7710196240216801,
+          "precision": 0.8736721502224083,
+          "recall": 0.8575494459454616
+        },
+        "macro_foreground": {
+          "dice": 0.7869527205660841,
+          "iou": 0.6979326806719831,
+          "precision": 0.8331519780712943,
+          "recall": 0.8117392391577885
+        }
+      },
+      "split": "test",
+      "n_patients": 33,
+      "checkpoint": "outputs\\checkpoints\\sprint3_coverage\\best_val_dice.pt",
+      "checkpoint_metadata": {
+        "epoch": 29,
+        "val_fg_dice": 0.8983064221268103,
+        "val_loss": 0.1337073937058449,
+        "selection": "best validation foreground Dice"
+      },
+      "model": "UNet(in=1, classes=4, base=16, depth=4, bilinear=True) 1,963,860 params",
+      "per_patient_dice": {
+        "background": {
+          "mean_dice": 0.9953082178983877,
+          "std_dice": 0.001021620483997883,
+          "n_patients": 33
+        },
+        "vertebra": {
+          "mean_dice": 0.9163748670339641,
+          "std_dice": 0.015716967087072348,
+          "n_patients": 33
+        },
+        "intervertebral_disc": {
+          "mean_dice": 0.8868402921886553,
+          "std_dice": 0.029380766421101746,
+          "n_patients": 33
+        },
+        "spinal_canal": {
+          "mean_dice": 0.9041795218212408,
+          "std_dice": 0.024321828722182918,
+          "n_patients": 33
+        }
+      }
+    },
+    "sprint2_extended": {
+      "n_slices": 1655,
+      "n_pixels": 149135360,
+      "pixel_accuracy": 0.9906705425192255,
+      "aggregate": {
+        "per_class": {
+          "background": {
+            "class_id": 0,
+            "dice": 0.9951361582860946,
+            "iou": 0.9903194014711294,
+            "precision": 0.9950933170598021,
+            "recall": 0.9951790032013872,
+            "support_pixels_true": 141600177,
+            "support_pixels_pred": 141612370,
+            "tp": 140917523,
+            "fp": 694847,
+            "fn": 682654
+          },
+          "vertebra": {
+            "class_id": 1,
+            "dice": 0.9133188035532562,
+            "iou": 0.8404661887402192,
+            "precision": 0.9177741992028966,
+            "recall": 0.9089064569458621,
+            "support_pixels_true": 5426389,
+            "support_pixels_pred": 5373958,
+            "tp": 4932080,
+            "fp": 441878,
+            "fn": 494309
+          },
+          "intervertebral_disc": {
+            "class_id": 2,
+            "dice": 0.8779045274169535,
+            "iou": 0.7823795290752139,
+            "precision": 0.8710914480938522,
+            "recall": 0.8848250213220693,
+            "support_pixels_true": 1089247,
+            "support_pixels_pred": 1106420,
+            "tp": 963793,
+            "fp": 142627,
+            "fn": 125454
+          },
+          "spinal_canal": {
+            "class_id": 3,
+            "dice": 0.9025608597591165,
+            "iou": 0.8224245214736993,
+            "precision": 0.8925774880780194,
+            "recall": 0.9127700831840023,
+            "support_pixels_true": 1019547,
+            "support_pixels_pred": 1042612,
+            "tp": 930612,
+            "fp": 112000,
+            "fn": 88935
+          }
+        },
+        "macro_all_classes": {
+          "dice": 0.9222300872538551,
+          "iou": 0.8588974101900654,
+          "precision": 0.9191341131086426,
+          "recall": 0.9254201411633303
+        },
+        "macro_foreground": {
+          "dice": 0.8979280635764421,
+          "iou": 0.8150900797630442,
+          "precision": 0.8938143784582561,
+          "recall": 0.9021671871506446
+        }
+      },
+      "per_slice_mean": {
+        "per_class": {
+          "background": {
+            "class_id": 0,
+            "n_slices_counted": 1655,
+            "dice": 0.9949686696655242,
+            "dice_n_defined": 1655,
+            "iou": 0.9900174964647691,
+            "iou_n_defined": 1655,
+            "precision": 0.9949469389874542,
+            "precision_n_defined": 1655,
+            "recall": 0.9949999395738144,
+            "recall_n_defined": 1655
+          },
+          "vertebra": {
+            "class_id": 1,
+            "n_slices_counted": 1655,
+            "dice": 0.8040223503041831,
+            "dice_n_defined": 1655,
+            "iou": 0.7101903108900913,
+            "iou_n_defined": 1655,
+            "precision": 0.8565126294874632,
+            "precision_n_defined": 1635,
+            "recall": 0.7931416554062133,
+            "recall_n_defined": 1655
+          },
+          "intervertebral_disc": {
+            "class_id": 2,
+            "n_slices_counted": 1221,
+            "dice": 0.7821170455989117,
+            "dice_n_defined": 1221,
+            "iou": 0.6877226524923765,
+            "iou_n_defined": 1221,
+            "precision": 0.8247253580040004,
+            "precision_n_defined": 1169,
+            "recall": 0.8119537694454747,
+            "recall_n_defined": 1202
+          },
+          "spinal_canal": {
+            "class_id": 3,
+            "n_slices_counted": 630,
+            "dice": 0.7572361574592325,
+            "dice_n_defined": 630,
+            "iou": 0.6766848233932291,
+            "iou_n_defined": 630,
+            "precision": 0.8122232105063485,
+            "precision_n_defined": 595,
+            "recall": 0.8100335606365796,
+            "recall_n_defined": 617
+          }
+        },
+        "macro_all_classes": {
+          "dice": 0.8345860557569629,
+          "iou": 0.7661538208101165,
+          "precision": 0.8721020342463166,
+          "recall": 0.8525322312655205
+        },
+        "macro_foreground": {
+          "dice": 0.7811251844541092,
+          "iou": 0.691532595591899,
+          "precision": 0.8311537326659373,
+          "recall": 0.8050429951627559
+        }
+      },
+      "split": "test",
+      "n_patients": 33,
+      "checkpoint": "outputs\\checkpoints\\sprint2_extended\\best_val_dice.pt",
+      "checkpoint_metadata": {
+        "epoch": 30,
+        "val_fg_dice": 0.898513214251773,
+        "val_loss": 0.13479716420173646,
+        "selection": "best validation foreground Dice"
+      },
+      "model": "UNet(in=1, classes=4, base=16, depth=4, bilinear=True) 1,963,860 params",
+      "per_patient_dice": {
+        "background": {
+          "mean_dice": 0.995219324304875,
+          "std_dice": 0.001034545782236284,
+          "n_patients": 33
+        },
+        "vertebra": {
+          "mean_dice": 0.9140512378366564,
+          "std_dice": 0.016763689717991723,
+          "n_patients": 33
+        },
+        "intervertebral_disc": {
+          "mean_dice": 0.8867838384169692,
+          "std_dice": 0.029906965676921055,
+          "n_patients": 33
+        },
+        "spinal_canal": {
+          "mean_dice": 0.9025260226445113,
+          "std_dice": 0.0225140495705166,
+          "n_patients": 33
+        }
+      }
+    }
+  },
+  "measurement_agreement": {
+    "detection": {
+      "n_series_with_predictions": 64,
+      "n_truth_discs": 447,
+      "n_predicted_discs": 467,
+      "n_matched_by_identity": 445,
+      "pct_truth_discs_recovered": 99.55,
+      "n_predicted_not_in_truth": 22,
+      "n_truth_not_recovered": 2
+    },
+    "measurement_agreement": [
+      {
+        "measurement": "height_mm_central",
+        "unit": "mm",
+        "n": 445,
+        "gt_mean": 7.0475,
+        "pred_mean": 7.5659,
+        "bias": 0.5184,
+        "mae": 0.8658,
+        "rmse": 1.2617,
+        "p90_abs_error": 1.7056,
+        "pearson_r": 0.8851,
+        "spearman_r": 0.8894,
+        "mae_pct_of_gt_mean": 12.29
+      },
+      {
+        "measurement": "height_mm_anterior",
+        "unit": "mm",
+        "n": 445,
+        "gt_mean": 6.5173,
+        "pred_mean": 6.8294,
+        "bias": 0.3121,
+        "mae": 0.9759,
+        "rmse": 1.4092,
+        "p90_abs_error": 2.0,
+        "pearson_r": 0.833,
+        "spearman_r": 0.8491,
+        "mae_pct_of_gt_mean": 14.97
+      },
+      {
+        "measurement": "height_mm_posterior",
+        "unit": "mm",
+        "n": 445,
+        "gt_mean": 4.8506,
+        "pred_mean": 5.1924,
+        "bias": 0.3418,
+        "mae": 0.7399,
+        "rmse": 0.9943,
+        "p90_abs_error": 1.5912,
+        "pearson_r": 0.7913,
+        "spearman_r": 0.7855,
+        "mae_pct_of_gt_mean": 15.25
+      },
+      {
+        "measurement": "area_mm2",
+        "unit": "mm2",
+        "n": 445,
+        "gt_mean": 212.8719,
+        "pred_mean": 230.6517,
+        "bias": 17.7798,
+        "mae": 28.4629,
+        "rmse": 39.0778,
+        "p90_abs_error": 55.6,
+        "pearson_r": 0.9078,
+        "spearman_r": 0.9119,
+        "mae_pct_of_gt_mean": 13.37
+      },
+      {
+        "measurement": "ap_extent_mm",
+        "unit": "mm",
+        "n": 445,
+        "gt_mean": 33.6809,
+        "pred_mean": 34.4022,
+        "bias": 0.7213,
+        "mae": 2.1685,
+        "rmse": 3.7088,
+        "p90_abs_error": 4.0,
+        "pearson_r": 0.7576,
+        "spearman_r": 0.8117,
+        "mae_pct_of_gt_mean": 6.44
+      },
+      {
+        "measurement": "height_ratio_to_series_median",
+        "unit": "ratio",
+        "n": 445,
+        "gt_mean": 1.0367,
+        "pred_mean": 1.0399,
+        "bias": 0.0032,
+        "mae": 0.1192,
+        "rmse": 0.1717,
+        "p90_abs_error": 0.2796,
+        "pearson_r": 0.8373,
+        "spearman_r": 0.8461,
+        "mae_pct_of_gt_mean": 11.5
+      },
+      {
+        "measurement": "disc_to_vertebra_height_ratio",
+        "unit": "ratio",
+        "n": 445,
+        "gt_mean": 0.1908,
+        "pred_mean": 0.3273,
+        "bias": 0.1365,
+        "mae": 0.1384,
+        "rmse": 0.1768,
+        "p90_abs_error": 0.2683,
+        "pearson_r": 0.6333,
+        "spearman_r": 0.6494,
+        "mae_pct_of_gt_mean": 72.51
+      },
+      {
+        "measurement": "canal_width_at_disc_mm",
+        "unit": "mm",
+        "n": 443,
+        "gt_mean": 11.149,
+        "pred_mean": 11.1924,
+        "bias": 0.0434,
+        "mae": 1.1665,
+        "rmse": 1.6362,
+        "p90_abs_error": 2.395,
+        "pearson_r": 0.7827,
+        "spearman_r": 0.7814,
+        "mae_pct_of_gt_mean": 10.46
+      },
+      {
+        "measurement": "intensity_disc_vertebra_ratio",
+        "unit": "ratio",
+        "n": 445,
+        "gt_mean": 0.3958,
+        "pred_mean": 0.388,
+        "bias": -0.0078,
+        "mae": 0.0384,
+        "rmse": 0.0594,
+        "p90_abs_error": 0.0953,
+        "pearson_r": 0.9563,
+        "spearman_r": 0.9437,
+        "mae_pct_of_gt_mean": 9.7
+      }
+    ],
+    "end_to_end_pfirrmann": {
+      "note": "Fitted on ground-truth-mask features from training patients, evaluated on predicted-mask features from test patients. Includes segmentation error, unlike the Stage E report.",
+      "features": "geometric+intensity",
+      "n_train_discs": 1036,
+      "logreg": {
+        "n_test_discs": 212,
+        "quadratic_weighted_kappa": 0.6246,
+        "mae": 0.8774,
+        "exact_agreement": 0.3585,
+        "within_one_grade": 0.8208
+      },
+      "forest": {
+        "n_test_discs": 212,
+        "quadratic_weighted_kappa": 0.6431,
+        "mae": 0.7642,
+        "exact_agreement": 0.434,
+        "within_one_grade": 0.8538
+      }
+    },
+    "interpretation": "Measurements are compared only for discs whose identity the prediction recovered correctly. Discs the segmentation missed or mis-numbered are counted in 'detection' instead - they are a detection failure, not a measurement error, and averaging them into the measurement error would conflate the two."
+  },
+  "disc_identification": {
+    "s4": {
+      "n_slices": 1655,
+      "n_truth_discs_total": 6821,
+      "n_predicted_discs_total": 6722,
+      "n_regions_found": 6507,
+      "n_index_correct": 5662,
+      "pct_slices_with_matching_disc_count": 75.77,
+      "pct_discs_region_found": 95.4,
+      "pct_discs_index_correct": 83.01,
+      "note": "Disc identity derived from the SEMANTIC prediction by ordered connected components. Measures how much segmentation error propagates into disc numbering. Ground-truth instance masks are used for the Stage D feature table precisely because of this."
+    },
+    "s3": {
+      "n_slices": 1655,
+      "n_truth_discs_total": 6821,
+      "n_predicted_discs_total": 6836,
+      "n_regions_found": 6593,
+      "n_index_correct": 5758,
+      "pct_slices_with_matching_disc_count": 77.16,
+      "pct_discs_region_found": 96.66,
+      "pct_discs_index_correct": 84.42,
+      "note": "Disc identity derived from the SEMANTIC prediction by ordered connected components. Measures how much segmentation error propagates into disc numbering. Ground-truth instance masks are used for the Stage D feature table precisely because of this."
+    },
+    "s2": {
+      "n_slices": 1655,
+      "n_truth_discs_total": 6821,
+      "n_predicted_discs_total": 6762,
+      "n_regions_found": 6526,
+      "n_index_correct": 5634,
+      "pct_slices_with_matching_disc_count": 75.71,
+      "pct_discs_region_found": 95.68,
+      "pct_discs_index_correct": 82.6,
+      "note": "Disc identity derived from the SEMANTIC prediction by ordered connected components. Measures how much segmentation error propagates into disc numbering. Ground-truth instance masks are used for the Stage D feature table precisely because of this."
+    }
+  },
+  "indexing": {
+    "sprint3_coverage": {
+      "n_discs_analysed": 6821,
+      "n_slices_analysed": 1655,
+      "categories": {
+        "correct": {
+          "n": 5735,
+          "pct": 84.08
+        },
+        "shifted": {
+          "n": 825,
+          "pct": 12.1
+        },
+        "missed": {
+          "n": 228,
+          "pct": 3.34
+        },
+        "split": {
+          "n": 31,
+          "pct": 0.45
+        },
+        "merged": {
+          "n": 2,
+          "pct": 0.03
+        }
+      },
+      "pct_index_correct": 84.08,
+      "pct_region_found": 96.66,
+      "shifted_offsets": {
+        "-5.0": 3,
+        "-4.0": 10,
+        "-3.0": 24,
+        "-2.0": 108,
+        "-1.0": 321,
+        "1.0": 347,
+        "2.0": 12
+      },
+      "pct_shifted_by_one": 9.79,
+      "slice_count_delta_distribution": {
+        "-3": 5,
+        "-2": 14,
+        "-1": 160,
+        "0": 1277,
+        "1": 184,
+        "2": 11,
+        "3": 4
+      },
+      "pct_slices_count_correct": 77.16,
+      "pct_slices_all_discs_correct": 77.95,
+      "total_spurious_components": 270,
+      "pct_slices_with_spurious": 14.56,
+      "vertebra_component_delta_distribution": {
+        "-7": 1,
+        "-6": 1,
+        "-5": 5,
+        "-4": 26,
+        "-3": 81,
+        "-2": 174,
+        "-1": 322,
+        "0": 633,
+        "1": 237,
+        "2": 120,
+        "3": 37,
+        "4": 16,
+        "5": 1,
+        "6": 1
+      },
+      "pct_slices_vertebra_components_correct": 38.25,
+      "mean_abs_vertebra_component_delta": 1.038,
+      "pct_slices_vertebra_count_matches_instances": 16.5,
+      "mean_truth_vertebra_components_per_slice": 9.14,
+      "mean_truth_vertebra_instances_per_slice": 5.18,
+      "by_disc_index": [
+        {
+          "truth_index": 1,
+          "n": 1028,
+          "correct": 926,
+          "shifted": 24,
+          "merged": 0,
+          "split": 29,
+          "missed": 49,
+          "pct_correct": 90.08
+        },
+        {
+          "truth_index": 2,
+          "n": 1072,
+          "correct": 924,
+          "shifted": 129,
+          "merged": 0,
+          "split": 0,
+          "missed": 19,
+          "pct_correct": 86.19
+        },
+        {
+          "truth_index": 3,
+          "n": 1048,
+          "correct": 868,
+          "shifted": 149,
+          "merged": 0,
+          "split": 1,
+          "missed": 30,
+          "pct_correct": 82.82
+        },
+        {
+          "truth_index": 4,
+          "n": 994,
+          "correct": 810,
+          "shifted": 151,
+          "merged": 0,
+          "split": 0,
+          "missed": 33,
+          "pct_correct": 81.49
+        },
+        {
+          "truth_index": 5,
+          "n": 925,
+          "correct": 765,
+          "shifted": 130,
+          "merged": 0,
+          "split": 0,
+          "missed": 30,
+          "pct_correct": 82.7
+        },
+        {
+          "truth_index": 6,
+          "n": 854,
+          "correct": 723,
+          "shifted": 113,
+          "merged": 1,
+          "split": 1,
+          "missed": 16,
+          "pct_correct": 84.66
+        },
+        {
+          "truth_index": 7,
+          "n": 583,
+          "correct": 479,
+          "shifted": 87,
+          "merged": 1,
+          "split": 0,
+          "missed": 16,
+          "pct_correct": 82.16
+        },
+        {
+          "truth_index": 8,
+          "n": 269,
+          "correct": 200,
+          "shifted": 34,
+          "merged": 0,
+          "split": 0,
+          "missed": 35,
+          "pct_correct": 74.35
+        },
+        {
+          "truth_index": 9,
+          "n": 48,
+          "correct": 40,
+          "shifted": 8,
+          "merged": 0,
+          "split": 0,
+          "missed": 0,
+          "pct_correct": 83.33
+        }
+      ],
+      "by_slice_annotation_area": [
+        {
+          "area_band": "<1k",
+          "n": 135,
+          "pct_correct": 28.15,
+          "pct_shifted": 23.7,
+          "pct_missed": 48.15
+        },
+        {
+          "area_band": "1k-3k",
+          "n": 587,
+          "pct_correct": 55.88,
+          "pct_shifted": 32.03,
+          "pct_missed": 11.93
+        },
+        {
+          "area_band": "3k-6k",
+          "n": 1327,
+          "pct_correct": 76.87,
+          "pct_shifted": 18.54,
+          "pct_missed": 4.07
+        },
+        {
+          "area_band": "6k-10k",
+          "n": 3401,
+          "pct_correct": 91.5,
+          "pct_shifted": 7.23,
+          "pct_missed": 0.76
+        },
+        {
+          "area_band": ">10k",
+          "n": 1371,
+          "pct_correct": 90.23,
+          "pct_shifted": 8.24,
+          "pct_missed": 0.95
+        }
+      ],
+      "by_disc_size": [
+        {
+          "size_band": "<50",
+          "n": 473,
+          "pct_correct": 57.51,
+          "pct_missed": 24.74
+        },
+        {
+          "size_band": "50-100",
+          "n": 1357,
+          "pct_correct": 76.34,
+          "pct_missed": 6.78
+        },
+        {
+          "size_band": "100-200",
+          "n": 2964,
+          "pct_correct": 87.35,
+          "pct_missed": 0.57
+        },
+        {
+          "size_band": "200-400",
+          "n": 1968,
+          "pct_correct": 90.5,
+          "pct_missed": 0.1
+        },
+        {
+          "size_band": ">400",
+          "n": 59,
+          "pct_correct": 96.61,
+          "pct_missed": 0.0
+        }
+      ]
+    },
+    "sprint2_extended": {
+      "n_discs_analysed": 6821,
+      "n_slices_analysed": 1655,
+      "categories": {
+        "correct": {
+          "n": 5610,
+          "pct": 82.25
+        },
+        "shifted": {
+          "n": 885,
+          "pct": 12.97
+        },
+        "missed": {
+          "n": 291,
+          "pct": 4.27
+        },
+        "split": {
+          "n": 35,
+          "pct": 0.51
+        }
+      },
+      "pct_index_correct": 82.25,
+      "pct_region_found": 95.73,
+      "shifted_offsets": {
+        "-5.0": 1,
+        "-4.0": 21,
+        "-3.0": 32,
+        "-2.0": 124,
+        "-1.0": 325,
+        "1.0": 358,
+        "2.0": 24
+      },
+      "pct_shifted_by_one": 10.01,
+      "slice_count_delta_distribution": {
+        "-4": 1,
+        "-3": 7,
+        "-2": 29,
+        "-1": 183,
+        "0": 1250,
+        "1": 161,
+        "2": 22,
+        "3": 2
+      },
+      "pct_slices_count_correct": 75.53,
+      "pct_slices_all_discs_correct": 75.11,
+      "total_spurious_components": 249,
+      "pct_slices_with_spurious": 13.29,
+      "vertebra_component_delta_distribution": {
+        "-8": 1,
+        "-7": 3,
+        "-6": 1,
+        "-5": 7,
+        "-4": 34,
+        "-3": 100,
+        "-2": 177,
+        "-1": 347,
+        "0": 603,
+        "1": 223,
+        "2": 113,
+        "3": 30,
+        "4": 7,
+        "5": 7,
+        "6": 2
+      },
+      "pct_slices_vertebra_components_correct": 36.44,
+      "mean_abs_vertebra_component_delta": 1.1,
+      "pct_slices_vertebra_count_matches_instances": 16.13,
+      "mean_truth_vertebra_components_per_slice": 9.14,
+      "mean_truth_vertebra_instances_per_slice": 5.18,
+      "by_disc_index": [
+        {
+          "truth_index": 1,
+          "n": 1028,
+          "correct": 910,
+          "shifted": 27,
+          "merged": 0,
+          "split": 23,
+          "missed": 68,
+          "pct_correct": 88.52
+        },
+        {
+          "truth_index": 2,
+          "n": 1072,
+          "correct": 900,
+          "shifted": 144,
+          "merged": 0,
+          "split": 10,
+          "missed": 18,
+          "pct_correct": 83.96
+        },
+        {
+          "truth_index": 3,
+          "n": 1048,
+          "correct": 848,
+          "shifted": 165,
+          "merged": 0,
+          "split": 0,
+          "missed": 35,
+          "pct_correct": 80.92
+        },
+        {
+          "truth_index": 4,
+          "n": 994,
+          "correct": 789,
+          "shifted": 165,
+          "merged": 0,
+          "split": 0,
+          "missed": 40,
+          "pct_correct": 79.38
+        },
+        {
+          "truth_index": 5,
+          "n": 925,
+          "correct": 749,
+          "shifted": 136,
+          "merged": 0,
+          "split": 2,
+          "missed": 38,
+          "pct_correct": 80.97
+        },
+        {
+          "truth_index": 6,
+          "n": 854,
+          "correct": 715,
+          "shifted": 122,
+          "merged": 0,
+          "split": 0,
+          "missed": 17,
+          "pct_correct": 83.72
+        },
+        {
+          "truth_index": 7,
+          "n": 583,
+          "correct": 479,
+          "shifted": 83,
+          "merged": 0,
+          "split": 0,
+          "missed": 21,
+          "pct_correct": 82.16
+        },
+        {
+          "truth_index": 8,
+          "n": 269,
+          "correct": 182,
+          "shifted": 34,
+          "merged": 0,
+          "split": 0,
+          "missed": 53,
+          "pct_correct": 67.66
+        },
+        {
+          "truth_index": 9,
+          "n": 48,
+          "correct": 38,
+          "shifted": 9,
+          "merged": 0,
+          "split": 0,
+          "missed": 1,
+          "pct_correct": 79.17
+        }
+      ],
+      "by_slice_annotation_area": [
+        {
+          "area_band": "<1k",
+          "n": 135,
+          "pct_correct": 27.41,
+          "pct_shifted": 23.7,
+          "pct_missed": 48.89
+        },
+        {
+          "area_band": "1k-3k",
+          "n": 587,
+          "pct_correct": 50.6,
+          "pct_shifted": 34.41,
+          "pct_missed": 14.65
+        },
+        {
+          "area_band": "3k-6k",
+          "n": 1327,
+          "pct_correct": 73.02,
+          "pct_shifted": 20.5,
+          "pct_missed": 6.1
+        },
+        {
+          "area_band": "6k-10k",
+          "n": 3401,
+          "pct_correct": 90.5,
+          "pct_shifted": 7.67,
+          "pct_missed": 1.35
+        },
+        {
+          "area_band": ">10k",
+          "n": 1371,
+          "pct_correct": 89.64,
+          "pct_shifted": 8.61,
+          "pct_missed": 0.88
+        }
+      ],
+      "by_disc_size": [
+        {
+          "size_band": "<50",
+          "n": 473,
+          "pct_correct": 52.01,
+          "pct_missed": 29.6
+        },
+        {
+          "size_band": "50-100",
+          "n": 1357,
+          "pct_correct": 72.73,
+          "pct_missed": 9.58
+        },
+        {
+          "size_band": "100-200",
+          "n": 2964,
+          "pct_correct": 85.7,
+          "pct_missed": 0.57
+        },
+        {
+          "size_band": "200-400",
+          "n": 1968,
+          "pct_correct": 90.55,
+          "pct_missed": 0.2
+        },
+        {
+          "size_band": ">400",
+          "n": 59,
+          "pct_correct": 93.22,
+          "pct_missed": 0.0
+        }
+      ]
+    },
+    "sprint4_capacity": {
+      "n_discs_analysed": 6821,
+      "n_slices_analysed": 1655,
+      "categories": {
+        "correct": {
+          "n": 5641,
+          "pct": 82.7
+        },
+        "shifted": {
+          "n": 831,
+          "pct": 12.18
+        },
+        "missed": {
+          "n": 314,
+          "pct": 4.6
+        },
+        "split": {
+          "n": 35,
+          "pct": 0.51
+        }
+      },
+      "pct_index_correct": 82.7,
+      "pct_region_found": 95.4,
+      "shifted_offsets": {
+        "-5.0": 4,
+        "-4.0": 22,
+        "-3.0": 22,
+        "-2.0": 106,
+        "-1.0": 243,
+        "1.0": 412,
+        "2.0": 22
+      },
+      "pct_shifted_by_one": 9.6,
+      "slice_count_delta_distribution": {
+        "-3": 8,
+        "-2": 24,
+        "-1": 210,
+        "0": 1254,
+        "1": 137,
+        "2": 20,
+        "3": 2
+      },
+      "pct_slices_count_correct": 75.77,
+      "pct_slices_all_discs_correct": 75.11,
+      "total_spurious_components": 233,
+      "pct_slices_with_spurious": 12.69,
+      "vertebra_component_delta_distribution": {
+        "-10": 1,
+        "-9": 1,
+        "-8": 2,
+        "-7": 1,
+        "-6": 6,
+        "-5": 6,
+        "-4": 40,
+        "-3": 92,
+        "-2": 202,
+        "-1": 360,
+        "0": 584,
+        "1": 211,
+        "2": 92,
+        "3": 40,
+        "4": 10,
+        "5": 5,
+        "6": 2
+      },
+      "pct_slices_vertebra_components_correct": 35.29,
+      "mean_abs_vertebra_component_delta": 1.148,
+      "pct_slices_vertebra_count_matches_instances": 18.31,
+      "mean_truth_vertebra_components_per_slice": 9.14,
+      "mean_truth_vertebra_instances_per_slice": 5.18,
+      "by_disc_index": [
+        {
+          "truth_index": 1,
+          "n": 1028,
+          "correct": 923,
+          "shifted": 31,
+          "merged": 0,
+          "split": 32,
+          "missed": 42,
+          "pct_correct": 89.79
+        },
+        {
+          "truth_index": 2,
+          "n": 1072,
+          "correct": 930,
+          "shifted": 108,
+          "merged": 0,
+          "split": 3,
+          "missed": 31,
+          "pct_correct": 86.75
+        },
+        {
+          "truth_index": 3,
+          "n": 1048,
+          "correct": 866,
+          "shifted": 143,
+          "merged": 0,
+          "split": 0,
+          "missed": 39,
+          "pct_correct": 82.63
+        },
+        {
+          "truth_index": 4,
+          "n": 994,
+          "correct": 790,
+          "shifted": 153,
+          "merged": 0,
+          "split": 0,
+          "missed": 51,
+          "pct_correct": 79.48
+        },
+        {
+          "truth_index": 5,
+          "n": 925,
+          "correct": 742,
+          "shifted": 138,
+          "merged": 0,
+          "split": 0,
+          "missed": 45,
+          "pct_correct": 80.22
+        },
+        {
+          "truth_index": 6,
+          "n": 854,
+          "correct": 708,
+          "shifted": 123,
+          "merged": 0,
+          "split": 0,
+          "missed": 23,
+          "pct_correct": 82.9
+        },
+        {
+          "truth_index": 7,
+          "n": 583,
+          "correct": 466,
+          "shifted": 92,
+          "merged": 0,
+          "split": 0,
+          "missed": 25,
+          "pct_correct": 79.93
+        },
+        {
+          "truth_index": 8,
+          "n": 269,
+          "correct": 179,
+          "shifted": 36,
+          "merged": 0,
+          "split": 0,
+          "missed": 54,
+          "pct_correct": 66.54
+        },
+        {
+          "truth_index": 9,
+          "n": 48,
+          "correct": 37,
+          "shifted": 7,
+          "merged": 0,
+          "split": 0,
+          "missed": 4,
+          "pct_correct": 77.08
+        }
+      ],
+      "by_slice_annotation_area": [
+        {
+          "area_band": "<1k",
+          "n": 135,
+          "pct_correct": 31.85,
+          "pct_shifted": 17.04,
+          "pct_missed": 51.11
+        },
+        {
+          "area_band": "1k-3k",
+          "n": 587,
+          "pct_correct": 56.56,
+          "pct_shifted": 25.89,
+          "pct_missed": 17.38
+        },
+        {
+          "area_band": "3k-6k",
+          "n": 1327,
+          "pct_correct": 74.98,
+          "pct_shifted": 18.61,
+          "pct_missed": 5.95
+        },
+        {
+          "area_band": "6k-10k",
+          "n": 3401,
+          "pct_correct": 89.41,
+          "pct_shifted": 8.53,
+          "pct_missed": 1.53
+        },
+        {
+          "area_band": ">10k",
+          "n": 1371,
+          "pct_correct": 89.72,
+          "pct_shifted": 8.68,
+          "pct_missed": 0.88
+        }
+      ],
+      "by_disc_size": [
+        {
+          "size_band": "<50",
+          "n": 473,
+          "pct_correct": 52.64,
+          "pct_missed": 31.71
+        },
+        {
+          "size_band": "50-100",
+          "n": 1357,
+          "pct_correct": 73.03,
+          "pct_missed": 10.17
+        },
+        {
+          "size_band": "100-200",
+          "n": 2964,
+          "pct_correct": 86.74,
+          "pct_missed": 0.74
+        },
+        {
+          "size_band": "200-400",
+          "n": 1968,
+          "pct_correct": 90.09,
+          "pct_missed": 0.2
+        },
+        {
+          "size_band": ">400",
+          "n": 59,
+          "pct_correct": 96.61,
+          "pct_missed": 0.0
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "validation": [
+      {
+        "metric": "validation macro foreground Dice (best)",
+        "unit": "",
+        "sprint2_extended": 0.8985,
+        "sprint3_coverage": 0.89831,
+        "sprint4_capacity": 0.8936641561300577,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.004646,
+        "relative_delta_pct": -0.517,
+        "verdict_vs_s3": "worsened"
+      }
+    ],
+    "segmentation": [
+      {
+        "metric": "test background/dice",
+        "unit": "",
+        "sprint2_extended": 0.9951361582860946,
+        "sprint3_coverage": 0.9952665506224332,
+        "sprint4_capacity": 0.9950300490062199,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000237,
+        "relative_delta_pct": -0.024,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/iou",
+        "unit": "",
+        "sprint2_extended": 0.9903194014711294,
+        "sprint3_coverage": 0.9905777012191657,
+        "sprint4_capacity": 0.9901092545327044,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000468,
+        "relative_delta_pct": -0.047,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/precision",
+        "unit": "",
+        "sprint2_extended": 0.9950933170598021,
+        "sprint3_coverage": 0.9953746299607197,
+        "sprint4_capacity": 0.9945235957991673,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000851,
+        "relative_delta_pct": -0.085,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/recall",
+        "unit": "",
+        "sprint2_extended": 0.9951790032013872,
+        "sprint3_coverage": 0.9951584947524466,
+        "sprint4_capacity": 0.9955370182905915,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.000379,
+        "relative_delta_pct": 0.038,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test vertebra/dice",
+        "unit": "",
+        "sprint2_extended": 0.9133188035532562,
+        "sprint3_coverage": 0.9166250421944594,
+        "sprint4_capacity": 0.9111270265356556,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005498,
+        "relative_delta_pct": -0.6,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test vertebra/iou",
+        "unit": "",
+        "sprint2_extended": 0.8404661887402192,
+        "sprint3_coverage": 0.8460829148674011,
+        "sprint4_capacity": 0.8367615403629914,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.009321,
+        "relative_delta_pct": -1.102,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test vertebra/precision",
+        "unit": "",
+        "sprint2_extended": 0.9177741992028966,
+        "sprint3_coverage": 0.9194995630096019,
+        "sprint4_capacity": 0.9249806740782756,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.005481,
+        "relative_delta_pct": 0.596,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test vertebra/recall",
+        "unit": "",
+        "sprint2_extended": 0.9089064569458621,
+        "sprint3_coverage": 0.9137684379059444,
+        "sprint4_capacity": 0.8976822339865425,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016086,
+        "relative_delta_pct": -1.76,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/dice",
+        "unit": "",
+        "sprint2_extended": 0.8779045274169535,
+        "sprint3_coverage": 0.8782746012285413,
+        "sprint4_capacity": 0.8731271878007227,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005147,
+        "relative_delta_pct": -0.586,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/iou",
+        "unit": "",
+        "sprint2_extended": 0.7823795290752139,
+        "sprint3_coverage": 0.7829675624626573,
+        "sprint4_capacity": 0.7748231906462201,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.008144,
+        "relative_delta_pct": -1.04,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/precision",
+        "unit": "",
+        "sprint2_extended": 0.8710914480938522,
+        "sprint3_coverage": 0.8620828385415055,
+        "sprint4_capacity": 0.8683457594553391,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.006263,
+        "relative_delta_pct": 0.726,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test intervertebral_disc/recall",
+        "unit": "",
+        "sprint2_extended": 0.8848250213220693,
+        "sprint3_coverage": 0.8950862384748363,
+        "sprint4_capacity": 0.8779615642733007,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.017125,
+        "relative_delta_pct": -1.913,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/dice",
+        "unit": "",
+        "sprint2_extended": 0.9025608597591165,
+        "sprint3_coverage": 0.9051365131188096,
+        "sprint4_capacity": 0.8975503784595036,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.007586,
+        "relative_delta_pct": -0.838,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/iou",
+        "unit": "",
+        "sprint2_extended": 0.8224245214736993,
+        "sprint3_coverage": 0.8267117535330054,
+        "sprint4_capacity": 0.8141418536706657,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.01257,
+        "relative_delta_pct": -1.52,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/precision",
+        "unit": "",
+        "sprint2_extended": 0.8925774880780194,
+        "sprint3_coverage": 0.8952078632714771,
+        "sprint4_capacity": 0.8958869974788438,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.000679,
+        "relative_delta_pct": 0.076,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test spinal_canal/recall",
+        "unit": "",
+        "sprint2_extended": 0.9127700831840023,
+        "sprint3_coverage": 0.9152878680433565,
+        "sprint4_capacity": 0.8992199476826473,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016068,
+        "relative_delta_pct": -1.756,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/dice",
+        "unit": "",
+        "sprint2_extended": 0.8979280635764421,
+        "sprint3_coverage": 0.9000120521806035,
+        "sprint4_capacity": 0.8939348642652939,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.006077,
+        "relative_delta_pct": -0.675,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/iou",
+        "unit": "",
+        "sprint2_extended": 0.8150900797630442,
+        "sprint3_coverage": 0.8185874102876879,
+        "sprint4_capacity": 0.8085755282266257,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.010012,
+        "relative_delta_pct": -1.223,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/precision",
+        "unit": "",
+        "sprint2_extended": 0.8938143784582561,
+        "sprint3_coverage": 0.8922634216075281,
+        "sprint4_capacity": 0.8964044770041529,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.004141,
+        "relative_delta_pct": 0.464,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test macro_foreground/recall",
+        "unit": "",
+        "sprint2_extended": 0.9021671871506446,
+        "sprint3_coverage": 0.9080475148080458,
+        "sprint4_capacity": 0.8916212486474969,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016426,
+        "relative_delta_pct": -1.809,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test pixel_accuracy",
+        "unit": "",
+        "sprint2_extended": 0.9906705425192255,
+        "sprint3_coverage": 0.990920134567684,
+        "sprint4_capacity": 0.990459304889196,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000461,
+        "relative_delta_pct": -0.047,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/background",
+        "unit": "",
+        "sprint2_extended": 0.995219324304875,
+        "sprint3_coverage": 0.9953082178983877,
+        "sprint4_capacity": 0.9950714548791093,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000237,
+        "relative_delta_pct": -0.024,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/background",
+        "unit": "",
+        "sprint2_extended": 0.001034545782236284,
+        "sprint3_coverage": 0.001021620483997883,
+        "sprint4_capacity": 0.001126893040047991,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.000105,
+        "relative_delta_pct": 10.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/vertebra",
+        "unit": "",
+        "sprint2_extended": 0.9140512378366564,
+        "sprint3_coverage": 0.9163748670339641,
+        "sprint4_capacity": 0.9110611348674763,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005314,
+        "relative_delta_pct": -0.58,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/vertebra",
+        "unit": "",
+        "sprint2_extended": 0.016763689717991723,
+        "sprint3_coverage": 0.015716967087072348,
+        "sprint4_capacity": 0.019629400874375914,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.003912,
+        "relative_delta_pct": 24.893,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/intervertebral_disc",
+        "unit": "",
+        "sprint2_extended": 0.8867838384169692,
+        "sprint3_coverage": 0.8868402921886553,
+        "sprint4_capacity": 0.8815590002194015,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005281,
+        "relative_delta_pct": -0.596,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/intervertebral_disc",
+        "unit": "",
+        "sprint2_extended": 0.029906965676921055,
+        "sprint3_coverage": 0.029380766421101746,
+        "sprint4_capacity": 0.03105549126159604,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.001675,
+        "relative_delta_pct": 5.7,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/spinal_canal",
+        "unit": "",
+        "sprint2_extended": 0.9025260226445113,
+        "sprint3_coverage": 0.9041795218212408,
+        "sprint4_capacity": 0.8960848899704423,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.008095,
+        "relative_delta_pct": -0.895,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/spinal_canal",
+        "unit": "",
+        "sprint2_extended": 0.0225140495705166,
+        "sprint3_coverage": 0.024321828722182918,
+        "sprint4_capacity": 0.022767876291475326,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.001554,
+        "relative_delta_pct": -6.389,
+        "verdict_vs_s3": "improved"
+      }
+    ],
+    "indexing": [
+      {
+        "metric": "indexing pct_index_correct",
+        "unit": "%",
+        "sprint2_extended": 82.25,
+        "sprint3_coverage": 84.08,
+        "sprint4_capacity": 82.7,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.38,
+        "relative_delta_pct": -1.641,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_region_found",
+        "unit": "%",
+        "sprint2_extended": 95.73,
+        "sprint3_coverage": 96.66,
+        "sprint4_capacity": 95.4,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.26,
+        "relative_delta_pct": -1.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_slices_count_correct",
+        "unit": "%",
+        "sprint2_extended": 75.53,
+        "sprint3_coverage": 77.16,
+        "sprint4_capacity": 75.77,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.39,
+        "relative_delta_pct": -1.801,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_slices_all_discs_correct",
+        "unit": "%",
+        "sprint2_extended": 75.11,
+        "sprint3_coverage": 77.95,
+        "sprint4_capacity": 75.11,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -2.84,
+        "relative_delta_pct": -3.643,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing total_spurious_components",
+        "unit": "%",
+        "sprint2_extended": 249,
+        "sprint3_coverage": 270,
+        "sprint4_capacity": 233,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -37.0,
+        "relative_delta_pct": -13.704,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing pct_slices_with_spurious",
+        "unit": "%",
+        "sprint2_extended": 13.29,
+        "sprint3_coverage": 14.56,
+        "sprint4_capacity": 12.69,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -1.87,
+        "relative_delta_pct": -12.843,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing category %/correct",
+        "unit": "%",
+        "sprint2_extended": 82.25,
+        "sprint3_coverage": 84.08,
+        "sprint4_capacity": 82.7,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.38,
+        "relative_delta_pct": -1.641,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/shifted",
+        "unit": "%",
+        "sprint2_extended": 12.97,
+        "sprint3_coverage": 12.1,
+        "sprint4_capacity": 12.18,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.08,
+        "relative_delta_pct": 0.661,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/merged",
+        "unit": "%",
+        "sprint2_extended": 0.0,
+        "sprint3_coverage": 0.03,
+        "sprint4_capacity": 0.0,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.03,
+        "relative_delta_pct": -100.0,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing category %/split",
+        "unit": "%",
+        "sprint2_extended": 0.51,
+        "sprint3_coverage": 0.45,
+        "sprint4_capacity": 0.51,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.06,
+        "relative_delta_pct": 13.333,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/missed",
+        "unit": "%",
+        "sprint2_extended": 4.27,
+        "sprint3_coverage": 3.34,
+        "sprint4_capacity": 4.6,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.26,
+        "relative_delta_pct": 37.725,
+        "verdict_vs_s3": "worsened"
+      }
+    ],
+    "identification": [
+      {
+        "metric": "disc_identification pct_discs_index_correct",
+        "unit": "%",
+        "sprint2_extended": 82.6,
+        "sprint3_coverage": 84.42,
+        "sprint4_capacity": 83.01,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.41,
+        "relative_delta_pct": -1.67,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_identification pct_discs_region_found",
+        "unit": "%",
+        "sprint2_extended": 95.68,
+        "sprint3_coverage": 96.66,
+        "sprint4_capacity": 95.4,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.26,
+        "relative_delta_pct": -1.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_identification pct_slices_with_matching_disc_count",
+        "unit": "%",
+        "sprint2_extended": 75.71,
+        "sprint3_coverage": 77.16,
+        "sprint4_capacity": 75.77,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.39,
+        "relative_delta_pct": -1.801,
+        "verdict_vs_s3": "worsened"
+      }
+    ],
+    "measurements": [
+      {
+        "metric": "height_mm_central/mae",
+        "unit": "mm",
+        "sprint2_extended": 0.8065,
+        "sprint3_coverage": 0.7634,
+        "sprint4_capacity": 0.8658,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.1024,
+        "relative_delta_pct": 13.414,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_central/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8875,
+        "sprint3_coverage": 0.887,
+        "sprint4_capacity": 0.8851,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0019,
+        "relative_delta_pct": -0.214,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_central/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 11.42,
+        "sprint3_coverage": 10.82,
+        "sprint4_capacity": 12.29,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.47,
+        "relative_delta_pct": 13.586,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/mae",
+        "unit": "mm",
+        "sprint2_extended": 0.878,
+        "sprint3_coverage": 0.8425,
+        "sprint4_capacity": 0.9759,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.1334,
+        "relative_delta_pct": 15.834,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8535,
+        "sprint3_coverage": 0.8437,
+        "sprint4_capacity": 0.833,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0107,
+        "relative_delta_pct": -1.268,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 13.44,
+        "sprint3_coverage": 12.91,
+        "sprint4_capacity": 14.97,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 2.06,
+        "relative_delta_pct": 15.957,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_posterior/mae",
+        "unit": "mm",
+        "sprint2_extended": 0.7531,
+        "sprint3_coverage": 0.7399,
+        "sprint4_capacity": 0.7399,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0,
+        "relative_delta_pct": 0.0,
+        "verdict_vs_s3": "unchanged"
+      },
+      {
+        "metric": "height_mm_posterior/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.7478,
+        "sprint3_coverage": 0.7614,
+        "sprint4_capacity": 0.7913,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0299,
+        "relative_delta_pct": 3.927,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "height_mm_posterior/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 15.5,
+        "sprint3_coverage": 15.23,
+        "sprint4_capacity": 15.25,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.02,
+        "relative_delta_pct": 0.131,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "area_mm2/mae",
+        "unit": "mm2",
+        "sprint2_extended": 25.3431,
+        "sprint3_coverage": 24.8986,
+        "sprint4_capacity": 28.4629,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 3.5643,
+        "relative_delta_pct": 14.315,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "area_mm2/pearson_r",
+        "unit": "mm2",
+        "sprint2_extended": 0.9079,
+        "sprint3_coverage": 0.8946,
+        "sprint4_capacity": 0.9078,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0132,
+        "relative_delta_pct": 1.476,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "area_mm2/mae_pct_of_gt_mean",
+        "unit": "mm2",
+        "sprint2_extended": 11.87,
+        "sprint3_coverage": 11.68,
+        "sprint4_capacity": 13.37,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.69,
+        "relative_delta_pct": 14.469,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/mae",
+        "unit": "mm",
+        "sprint2_extended": 1.9865,
+        "sprint3_coverage": 1.9955,
+        "sprint4_capacity": 2.1685,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.173,
+        "relative_delta_pct": 8.67,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.7766,
+        "sprint3_coverage": 0.7712,
+        "sprint4_capacity": 0.7576,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0136,
+        "relative_delta_pct": -1.763,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 5.89,
+        "sprint3_coverage": 5.92,
+        "sprint4_capacity": 6.44,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.52,
+        "relative_delta_pct": 8.784,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.1186,
+        "sprint3_coverage": 0.1123,
+        "sprint4_capacity": 0.1192,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0069,
+        "relative_delta_pct": 6.144,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.8356,
+        "sprint3_coverage": 0.8481,
+        "sprint4_capacity": 0.8373,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0108,
+        "relative_delta_pct": -1.273,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 11.42,
+        "sprint3_coverage": 10.82,
+        "sprint4_capacity": 11.5,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.68,
+        "relative_delta_pct": 6.285,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.1361,
+        "sprint3_coverage": 0.1372,
+        "sprint4_capacity": 0.1384,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0012,
+        "relative_delta_pct": 0.875,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.6467,
+        "sprint3_coverage": 0.675,
+        "sprint4_capacity": 0.6333,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0417,
+        "relative_delta_pct": -6.178,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 71.29,
+        "sprint3_coverage": 71.87,
+        "sprint4_capacity": 72.51,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.64,
+        "relative_delta_pct": 0.89,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/mae",
+        "unit": "mm",
+        "sprint2_extended": 1.1298,
+        "sprint3_coverage": 1.1513,
+        "sprint4_capacity": 1.1665,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0152,
+        "relative_delta_pct": 1.32,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8107,
+        "sprint3_coverage": 0.8065,
+        "sprint4_capacity": 0.7827,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0238,
+        "relative_delta_pct": -2.951,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 10.13,
+        "sprint3_coverage": 10.33,
+        "sprint4_capacity": 10.46,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.13,
+        "relative_delta_pct": 1.258,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.036,
+        "sprint3_coverage": 0.0364,
+        "sprint4_capacity": 0.0384,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.002,
+        "relative_delta_pct": 5.495,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.9638,
+        "sprint3_coverage": 0.9639,
+        "sprint4_capacity": 0.9563,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0076,
+        "relative_delta_pct": -0.788,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 9.09,
+        "sprint3_coverage": 9.2,
+        "sprint4_capacity": 9.7,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.5,
+        "relative_delta_pct": 5.435,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "detection % of truth discs recovered",
+        "unit": "%",
+        "sprint2_extended": 99.11,
+        "sprint3_coverage": 99.33,
+        "sprint4_capacity": 99.55,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.22,
+        "relative_delta_pct": 0.221,
+        "verdict_vs_s3": "improved"
+      }
+    ],
+    "pfirrmann": [
+      {
+        "metric": "Pfirrmann logreg/quadratic_weighted_kappa",
+        "unit": "",
+        "sprint2_extended": 0.6123,
+        "sprint3_coverage": 0.6038,
+        "sprint4_capacity": 0.6246,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0208,
+        "relative_delta_pct": 3.445,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/mae",
+        "unit": "",
+        "sprint2_extended": 0.9,
+        "sprint3_coverage": 0.881,
+        "sprint4_capacity": 0.8774,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.0036,
+        "relative_delta_pct": -0.409,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/within_one_grade",
+        "unit": "",
+        "sprint2_extended": 0.8,
+        "sprint3_coverage": 0.8143,
+        "sprint4_capacity": 0.8208,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0065,
+        "relative_delta_pct": 0.798,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/exact_agreement",
+        "unit": "",
+        "sprint2_extended": 0.3571,
+        "sprint3_coverage": 0.3714,
+        "sprint4_capacity": 0.3585,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0129,
+        "relative_delta_pct": -3.473,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "Pfirrmann forest/quadratic_weighted_kappa",
+        "unit": "",
+        "sprint2_extended": 0.6375,
+        "sprint3_coverage": 0.6317,
+        "sprint4_capacity": 0.6431,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0114,
+        "relative_delta_pct": 1.805,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/mae",
+        "unit": "",
+        "sprint2_extended": 0.8,
+        "sprint3_coverage": 0.7762,
+        "sprint4_capacity": 0.7642,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.012,
+        "relative_delta_pct": -1.546,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/within_one_grade",
+        "unit": "",
+        "sprint2_extended": 0.8429,
+        "sprint3_coverage": 0.8333,
+        "sprint4_capacity": 0.8538,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0205,
+        "relative_delta_pct": 2.46,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/exact_agreement",
+        "unit": "",
+        "sprint2_extended": 0.4048,
+        "sprint3_coverage": 0.4381,
+        "sprint4_capacity": 0.434,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0041,
+        "relative_delta_pct": -0.936,
+        "verdict_vs_s3": "worsened"
+      }
+    ],
+    "cost": [
+      {
+        "metric": "parameters",
+        "unit": "count",
+        "sprint2_extended": 1963860,
+        "sprint3_coverage": 1963860,
+        "sprint4_capacity": 7849124,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 5885264.0,
+        "relative_delta_pct": 299.678,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "mean epoch seconds",
+        "unit": "s",
+        "sprint2_extended": null,
+        "sprint3_coverage": 730.2,
+        "sprint4_capacity": 1976.0,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1245.8,
+        "relative_delta_pct": 170.611,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "total wall hours",
+        "unit": "h",
+        "sprint2_extended": null,
+        "sprint3_coverage": 5.88,
+        "sprint4_capacity": 16.47,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 10.59,
+        "relative_delta_pct": 180.102,
+        "verdict_vs_s3": "worsened"
+      }
+    ],
+    "all": [
+      {
+        "metric": "validation macro foreground Dice (best)",
+        "unit": "",
+        "sprint2_extended": 0.8985,
+        "sprint3_coverage": 0.89831,
+        "sprint4_capacity": 0.8936641561300577,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.004646,
+        "relative_delta_pct": -0.517,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/dice",
+        "unit": "",
+        "sprint2_extended": 0.9951361582860946,
+        "sprint3_coverage": 0.9952665506224332,
+        "sprint4_capacity": 0.9950300490062199,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000237,
+        "relative_delta_pct": -0.024,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/iou",
+        "unit": "",
+        "sprint2_extended": 0.9903194014711294,
+        "sprint3_coverage": 0.9905777012191657,
+        "sprint4_capacity": 0.9901092545327044,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000468,
+        "relative_delta_pct": -0.047,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/precision",
+        "unit": "",
+        "sprint2_extended": 0.9950933170598021,
+        "sprint3_coverage": 0.9953746299607197,
+        "sprint4_capacity": 0.9945235957991673,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000851,
+        "relative_delta_pct": -0.085,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/recall",
+        "unit": "",
+        "sprint2_extended": 0.9951790032013872,
+        "sprint3_coverage": 0.9951584947524466,
+        "sprint4_capacity": 0.9955370182905915,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.000379,
+        "relative_delta_pct": 0.038,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test vertebra/dice",
+        "unit": "",
+        "sprint2_extended": 0.9133188035532562,
+        "sprint3_coverage": 0.9166250421944594,
+        "sprint4_capacity": 0.9111270265356556,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005498,
+        "relative_delta_pct": -0.6,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test vertebra/iou",
+        "unit": "",
+        "sprint2_extended": 0.8404661887402192,
+        "sprint3_coverage": 0.8460829148674011,
+        "sprint4_capacity": 0.8367615403629914,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.009321,
+        "relative_delta_pct": -1.102,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test vertebra/precision",
+        "unit": "",
+        "sprint2_extended": 0.9177741992028966,
+        "sprint3_coverage": 0.9194995630096019,
+        "sprint4_capacity": 0.9249806740782756,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.005481,
+        "relative_delta_pct": 0.596,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test vertebra/recall",
+        "unit": "",
+        "sprint2_extended": 0.9089064569458621,
+        "sprint3_coverage": 0.9137684379059444,
+        "sprint4_capacity": 0.8976822339865425,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016086,
+        "relative_delta_pct": -1.76,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/dice",
+        "unit": "",
+        "sprint2_extended": 0.8779045274169535,
+        "sprint3_coverage": 0.8782746012285413,
+        "sprint4_capacity": 0.8731271878007227,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005147,
+        "relative_delta_pct": -0.586,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/iou",
+        "unit": "",
+        "sprint2_extended": 0.7823795290752139,
+        "sprint3_coverage": 0.7829675624626573,
+        "sprint4_capacity": 0.7748231906462201,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.008144,
+        "relative_delta_pct": -1.04,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/precision",
+        "unit": "",
+        "sprint2_extended": 0.8710914480938522,
+        "sprint3_coverage": 0.8620828385415055,
+        "sprint4_capacity": 0.8683457594553391,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.006263,
+        "relative_delta_pct": 0.726,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test intervertebral_disc/recall",
+        "unit": "",
+        "sprint2_extended": 0.8848250213220693,
+        "sprint3_coverage": 0.8950862384748363,
+        "sprint4_capacity": 0.8779615642733007,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.017125,
+        "relative_delta_pct": -1.913,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/dice",
+        "unit": "",
+        "sprint2_extended": 0.9025608597591165,
+        "sprint3_coverage": 0.9051365131188096,
+        "sprint4_capacity": 0.8975503784595036,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.007586,
+        "relative_delta_pct": -0.838,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/iou",
+        "unit": "",
+        "sprint2_extended": 0.8224245214736993,
+        "sprint3_coverage": 0.8267117535330054,
+        "sprint4_capacity": 0.8141418536706657,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.01257,
+        "relative_delta_pct": -1.52,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/precision",
+        "unit": "",
+        "sprint2_extended": 0.8925774880780194,
+        "sprint3_coverage": 0.8952078632714771,
+        "sprint4_capacity": 0.8958869974788438,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.000679,
+        "relative_delta_pct": 0.076,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test spinal_canal/recall",
+        "unit": "",
+        "sprint2_extended": 0.9127700831840023,
+        "sprint3_coverage": 0.9152878680433565,
+        "sprint4_capacity": 0.8992199476826473,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016068,
+        "relative_delta_pct": -1.756,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/dice",
+        "unit": "",
+        "sprint2_extended": 0.8979280635764421,
+        "sprint3_coverage": 0.9000120521806035,
+        "sprint4_capacity": 0.8939348642652939,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.006077,
+        "relative_delta_pct": -0.675,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/iou",
+        "unit": "",
+        "sprint2_extended": 0.8150900797630442,
+        "sprint3_coverage": 0.8185874102876879,
+        "sprint4_capacity": 0.8085755282266257,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.010012,
+        "relative_delta_pct": -1.223,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/precision",
+        "unit": "",
+        "sprint2_extended": 0.8938143784582561,
+        "sprint3_coverage": 0.8922634216075281,
+        "sprint4_capacity": 0.8964044770041529,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.004141,
+        "relative_delta_pct": 0.464,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test macro_foreground/recall",
+        "unit": "",
+        "sprint2_extended": 0.9021671871506446,
+        "sprint3_coverage": 0.9080475148080458,
+        "sprint4_capacity": 0.8916212486474969,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016426,
+        "relative_delta_pct": -1.809,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test pixel_accuracy",
+        "unit": "",
+        "sprint2_extended": 0.9906705425192255,
+        "sprint3_coverage": 0.990920134567684,
+        "sprint4_capacity": 0.990459304889196,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000461,
+        "relative_delta_pct": -0.047,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/background",
+        "unit": "",
+        "sprint2_extended": 0.995219324304875,
+        "sprint3_coverage": 0.9953082178983877,
+        "sprint4_capacity": 0.9950714548791093,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000237,
+        "relative_delta_pct": -0.024,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/background",
+        "unit": "",
+        "sprint2_extended": 0.001034545782236284,
+        "sprint3_coverage": 0.001021620483997883,
+        "sprint4_capacity": 0.001126893040047991,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.000105,
+        "relative_delta_pct": 10.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/vertebra",
+        "unit": "",
+        "sprint2_extended": 0.9140512378366564,
+        "sprint3_coverage": 0.9163748670339641,
+        "sprint4_capacity": 0.9110611348674763,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005314,
+        "relative_delta_pct": -0.58,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/vertebra",
+        "unit": "",
+        "sprint2_extended": 0.016763689717991723,
+        "sprint3_coverage": 0.015716967087072348,
+        "sprint4_capacity": 0.019629400874375914,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.003912,
+        "relative_delta_pct": 24.893,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/intervertebral_disc",
+        "unit": "",
+        "sprint2_extended": 0.8867838384169692,
+        "sprint3_coverage": 0.8868402921886553,
+        "sprint4_capacity": 0.8815590002194015,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005281,
+        "relative_delta_pct": -0.596,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/intervertebral_disc",
+        "unit": "",
+        "sprint2_extended": 0.029906965676921055,
+        "sprint3_coverage": 0.029380766421101746,
+        "sprint4_capacity": 0.03105549126159604,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.001675,
+        "relative_delta_pct": 5.7,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/spinal_canal",
+        "unit": "",
+        "sprint2_extended": 0.9025260226445113,
+        "sprint3_coverage": 0.9041795218212408,
+        "sprint4_capacity": 0.8960848899704423,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.008095,
+        "relative_delta_pct": -0.895,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/spinal_canal",
+        "unit": "",
+        "sprint2_extended": 0.0225140495705166,
+        "sprint3_coverage": 0.024321828722182918,
+        "sprint4_capacity": 0.022767876291475326,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.001554,
+        "relative_delta_pct": -6.389,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing pct_index_correct",
+        "unit": "%",
+        "sprint2_extended": 82.25,
+        "sprint3_coverage": 84.08,
+        "sprint4_capacity": 82.7,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.38,
+        "relative_delta_pct": -1.641,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_region_found",
+        "unit": "%",
+        "sprint2_extended": 95.73,
+        "sprint3_coverage": 96.66,
+        "sprint4_capacity": 95.4,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.26,
+        "relative_delta_pct": -1.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_slices_count_correct",
+        "unit": "%",
+        "sprint2_extended": 75.53,
+        "sprint3_coverage": 77.16,
+        "sprint4_capacity": 75.77,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.39,
+        "relative_delta_pct": -1.801,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_slices_all_discs_correct",
+        "unit": "%",
+        "sprint2_extended": 75.11,
+        "sprint3_coverage": 77.95,
+        "sprint4_capacity": 75.11,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -2.84,
+        "relative_delta_pct": -3.643,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing total_spurious_components",
+        "unit": "%",
+        "sprint2_extended": 249,
+        "sprint3_coverage": 270,
+        "sprint4_capacity": 233,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -37.0,
+        "relative_delta_pct": -13.704,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing pct_slices_with_spurious",
+        "unit": "%",
+        "sprint2_extended": 13.29,
+        "sprint3_coverage": 14.56,
+        "sprint4_capacity": 12.69,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -1.87,
+        "relative_delta_pct": -12.843,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing category %/correct",
+        "unit": "%",
+        "sprint2_extended": 82.25,
+        "sprint3_coverage": 84.08,
+        "sprint4_capacity": 82.7,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.38,
+        "relative_delta_pct": -1.641,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/shifted",
+        "unit": "%",
+        "sprint2_extended": 12.97,
+        "sprint3_coverage": 12.1,
+        "sprint4_capacity": 12.18,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.08,
+        "relative_delta_pct": 0.661,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/merged",
+        "unit": "%",
+        "sprint2_extended": 0.0,
+        "sprint3_coverage": 0.03,
+        "sprint4_capacity": 0.0,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.03,
+        "relative_delta_pct": -100.0,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing category %/split",
+        "unit": "%",
+        "sprint2_extended": 0.51,
+        "sprint3_coverage": 0.45,
+        "sprint4_capacity": 0.51,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.06,
+        "relative_delta_pct": 13.333,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/missed",
+        "unit": "%",
+        "sprint2_extended": 4.27,
+        "sprint3_coverage": 3.34,
+        "sprint4_capacity": 4.6,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.26,
+        "relative_delta_pct": 37.725,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_identification pct_discs_index_correct",
+        "unit": "%",
+        "sprint2_extended": 82.6,
+        "sprint3_coverage": 84.42,
+        "sprint4_capacity": 83.01,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.41,
+        "relative_delta_pct": -1.67,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_identification pct_discs_region_found",
+        "unit": "%",
+        "sprint2_extended": 95.68,
+        "sprint3_coverage": 96.66,
+        "sprint4_capacity": 95.4,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.26,
+        "relative_delta_pct": -1.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_identification pct_slices_with_matching_disc_count",
+        "unit": "%",
+        "sprint2_extended": 75.71,
+        "sprint3_coverage": 77.16,
+        "sprint4_capacity": 75.77,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.39,
+        "relative_delta_pct": -1.801,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_central/mae",
+        "unit": "mm",
+        "sprint2_extended": 0.8065,
+        "sprint3_coverage": 0.7634,
+        "sprint4_capacity": 0.8658,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.1024,
+        "relative_delta_pct": 13.414,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_central/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8875,
+        "sprint3_coverage": 0.887,
+        "sprint4_capacity": 0.8851,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0019,
+        "relative_delta_pct": -0.214,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_central/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 11.42,
+        "sprint3_coverage": 10.82,
+        "sprint4_capacity": 12.29,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.47,
+        "relative_delta_pct": 13.586,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/mae",
+        "unit": "mm",
+        "sprint2_extended": 0.878,
+        "sprint3_coverage": 0.8425,
+        "sprint4_capacity": 0.9759,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.1334,
+        "relative_delta_pct": 15.834,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8535,
+        "sprint3_coverage": 0.8437,
+        "sprint4_capacity": 0.833,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0107,
+        "relative_delta_pct": -1.268,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 13.44,
+        "sprint3_coverage": 12.91,
+        "sprint4_capacity": 14.97,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 2.06,
+        "relative_delta_pct": 15.957,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_posterior/mae",
+        "unit": "mm",
+        "sprint2_extended": 0.7531,
+        "sprint3_coverage": 0.7399,
+        "sprint4_capacity": 0.7399,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0,
+        "relative_delta_pct": 0.0,
+        "verdict_vs_s3": "unchanged"
+      },
+      {
+        "metric": "height_mm_posterior/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.7478,
+        "sprint3_coverage": 0.7614,
+        "sprint4_capacity": 0.7913,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0299,
+        "relative_delta_pct": 3.927,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "height_mm_posterior/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 15.5,
+        "sprint3_coverage": 15.23,
+        "sprint4_capacity": 15.25,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.02,
+        "relative_delta_pct": 0.131,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "area_mm2/mae",
+        "unit": "mm2",
+        "sprint2_extended": 25.3431,
+        "sprint3_coverage": 24.8986,
+        "sprint4_capacity": 28.4629,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 3.5643,
+        "relative_delta_pct": 14.315,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "area_mm2/pearson_r",
+        "unit": "mm2",
+        "sprint2_extended": 0.9079,
+        "sprint3_coverage": 0.8946,
+        "sprint4_capacity": 0.9078,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0132,
+        "relative_delta_pct": 1.476,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "area_mm2/mae_pct_of_gt_mean",
+        "unit": "mm2",
+        "sprint2_extended": 11.87,
+        "sprint3_coverage": 11.68,
+        "sprint4_capacity": 13.37,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.69,
+        "relative_delta_pct": 14.469,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/mae",
+        "unit": "mm",
+        "sprint2_extended": 1.9865,
+        "sprint3_coverage": 1.9955,
+        "sprint4_capacity": 2.1685,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.173,
+        "relative_delta_pct": 8.67,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.7766,
+        "sprint3_coverage": 0.7712,
+        "sprint4_capacity": 0.7576,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0136,
+        "relative_delta_pct": -1.763,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 5.89,
+        "sprint3_coverage": 5.92,
+        "sprint4_capacity": 6.44,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.52,
+        "relative_delta_pct": 8.784,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.1186,
+        "sprint3_coverage": 0.1123,
+        "sprint4_capacity": 0.1192,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0069,
+        "relative_delta_pct": 6.144,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.8356,
+        "sprint3_coverage": 0.8481,
+        "sprint4_capacity": 0.8373,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0108,
+        "relative_delta_pct": -1.273,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 11.42,
+        "sprint3_coverage": 10.82,
+        "sprint4_capacity": 11.5,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.68,
+        "relative_delta_pct": 6.285,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.1361,
+        "sprint3_coverage": 0.1372,
+        "sprint4_capacity": 0.1384,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0012,
+        "relative_delta_pct": 0.875,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.6467,
+        "sprint3_coverage": 0.675,
+        "sprint4_capacity": 0.6333,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0417,
+        "relative_delta_pct": -6.178,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 71.29,
+        "sprint3_coverage": 71.87,
+        "sprint4_capacity": 72.51,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.64,
+        "relative_delta_pct": 0.89,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/mae",
+        "unit": "mm",
+        "sprint2_extended": 1.1298,
+        "sprint3_coverage": 1.1513,
+        "sprint4_capacity": 1.1665,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0152,
+        "relative_delta_pct": 1.32,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8107,
+        "sprint3_coverage": 0.8065,
+        "sprint4_capacity": 0.7827,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0238,
+        "relative_delta_pct": -2.951,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 10.13,
+        "sprint3_coverage": 10.33,
+        "sprint4_capacity": 10.46,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.13,
+        "relative_delta_pct": 1.258,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.036,
+        "sprint3_coverage": 0.0364,
+        "sprint4_capacity": 0.0384,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.002,
+        "relative_delta_pct": 5.495,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.9638,
+        "sprint3_coverage": 0.9639,
+        "sprint4_capacity": 0.9563,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0076,
+        "relative_delta_pct": -0.788,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 9.09,
+        "sprint3_coverage": 9.2,
+        "sprint4_capacity": 9.7,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.5,
+        "relative_delta_pct": 5.435,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "detection % of truth discs recovered",
+        "unit": "%",
+        "sprint2_extended": 99.11,
+        "sprint3_coverage": 99.33,
+        "sprint4_capacity": 99.55,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.22,
+        "relative_delta_pct": 0.221,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/quadratic_weighted_kappa",
+        "unit": "",
+        "sprint2_extended": 0.6123,
+        "sprint3_coverage": 0.6038,
+        "sprint4_capacity": 0.6246,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0208,
+        "relative_delta_pct": 3.445,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/mae",
+        "unit": "",
+        "sprint2_extended": 0.9,
+        "sprint3_coverage": 0.881,
+        "sprint4_capacity": 0.8774,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.0036,
+        "relative_delta_pct": -0.409,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/within_one_grade",
+        "unit": "",
+        "sprint2_extended": 0.8,
+        "sprint3_coverage": 0.8143,
+        "sprint4_capacity": 0.8208,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0065,
+        "relative_delta_pct": 0.798,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/exact_agreement",
+        "unit": "",
+        "sprint2_extended": 0.3571,
+        "sprint3_coverage": 0.3714,
+        "sprint4_capacity": 0.3585,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0129,
+        "relative_delta_pct": -3.473,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "Pfirrmann forest/quadratic_weighted_kappa",
+        "unit": "",
+        "sprint2_extended": 0.6375,
+        "sprint3_coverage": 0.6317,
+        "sprint4_capacity": 0.6431,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0114,
+        "relative_delta_pct": 1.805,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/mae",
+        "unit": "",
+        "sprint2_extended": 0.8,
+        "sprint3_coverage": 0.7762,
+        "sprint4_capacity": 0.7642,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.012,
+        "relative_delta_pct": -1.546,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/within_one_grade",
+        "unit": "",
+        "sprint2_extended": 0.8429,
+        "sprint3_coverage": 0.8333,
+        "sprint4_capacity": 0.8538,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0205,
+        "relative_delta_pct": 2.46,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/exact_agreement",
+        "unit": "",
+        "sprint2_extended": 0.4048,
+        "sprint3_coverage": 0.4381,
+        "sprint4_capacity": 0.434,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0041,
+        "relative_delta_pct": -0.936,
+        "verdict_vs_s3": "worsened"
+      }
+    ],
+    "tally": {
+      "worsened": 61,
+      "improved": 18,
+      "unchanged": 1
+    },
+    "improved": [
+      {
+        "metric": "test background/recall",
+        "unit": "",
+        "sprint2_extended": 0.9951790032013872,
+        "sprint3_coverage": 0.9951584947524466,
+        "sprint4_capacity": 0.9955370182905915,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.000379,
+        "relative_delta_pct": 0.038,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test vertebra/precision",
+        "unit": "",
+        "sprint2_extended": 0.9177741992028966,
+        "sprint3_coverage": 0.9194995630096019,
+        "sprint4_capacity": 0.9249806740782756,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.005481,
+        "relative_delta_pct": 0.596,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test intervertebral_disc/precision",
+        "unit": "",
+        "sprint2_extended": 0.8710914480938522,
+        "sprint3_coverage": 0.8620828385415055,
+        "sprint4_capacity": 0.8683457594553391,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.006263,
+        "relative_delta_pct": 0.726,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test spinal_canal/precision",
+        "unit": "",
+        "sprint2_extended": 0.8925774880780194,
+        "sprint3_coverage": 0.8952078632714771,
+        "sprint4_capacity": 0.8958869974788438,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.000679,
+        "relative_delta_pct": 0.076,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test macro_foreground/precision",
+        "unit": "",
+        "sprint2_extended": 0.8938143784582561,
+        "sprint3_coverage": 0.8922634216075281,
+        "sprint4_capacity": 0.8964044770041529,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.004141,
+        "relative_delta_pct": 0.464,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "test per_patient_dice_sd/spinal_canal",
+        "unit": "",
+        "sprint2_extended": 0.0225140495705166,
+        "sprint3_coverage": 0.024321828722182918,
+        "sprint4_capacity": 0.022767876291475326,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.001554,
+        "relative_delta_pct": -6.389,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing total_spurious_components",
+        "unit": "%",
+        "sprint2_extended": 249,
+        "sprint3_coverage": 270,
+        "sprint4_capacity": 233,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -37.0,
+        "relative_delta_pct": -13.704,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing pct_slices_with_spurious",
+        "unit": "%",
+        "sprint2_extended": 13.29,
+        "sprint3_coverage": 14.56,
+        "sprint4_capacity": 12.69,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -1.87,
+        "relative_delta_pct": -12.843,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "indexing category %/merged",
+        "unit": "%",
+        "sprint2_extended": 0.0,
+        "sprint3_coverage": 0.03,
+        "sprint4_capacity": 0.0,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.03,
+        "relative_delta_pct": -100.0,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "height_mm_posterior/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.7478,
+        "sprint3_coverage": 0.7614,
+        "sprint4_capacity": 0.7913,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0299,
+        "relative_delta_pct": 3.927,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "area_mm2/pearson_r",
+        "unit": "mm2",
+        "sprint2_extended": 0.9079,
+        "sprint3_coverage": 0.8946,
+        "sprint4_capacity": 0.9078,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0132,
+        "relative_delta_pct": 1.476,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "detection % of truth discs recovered",
+        "unit": "%",
+        "sprint2_extended": 99.11,
+        "sprint3_coverage": 99.33,
+        "sprint4_capacity": 99.55,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.22,
+        "relative_delta_pct": 0.221,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/quadratic_weighted_kappa",
+        "unit": "",
+        "sprint2_extended": 0.6123,
+        "sprint3_coverage": 0.6038,
+        "sprint4_capacity": 0.6246,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0208,
+        "relative_delta_pct": 3.445,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/mae",
+        "unit": "",
+        "sprint2_extended": 0.9,
+        "sprint3_coverage": 0.881,
+        "sprint4_capacity": 0.8774,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.0036,
+        "relative_delta_pct": -0.409,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann logreg/within_one_grade",
+        "unit": "",
+        "sprint2_extended": 0.8,
+        "sprint3_coverage": 0.8143,
+        "sprint4_capacity": 0.8208,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0065,
+        "relative_delta_pct": 0.798,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/quadratic_weighted_kappa",
+        "unit": "",
+        "sprint2_extended": 0.6375,
+        "sprint3_coverage": 0.6317,
+        "sprint4_capacity": 0.6431,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0114,
+        "relative_delta_pct": 1.805,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/mae",
+        "unit": "",
+        "sprint2_extended": 0.8,
+        "sprint3_coverage": 0.7762,
+        "sprint4_capacity": 0.7642,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": -0.012,
+        "relative_delta_pct": -1.546,
+        "verdict_vs_s3": "improved"
+      },
+      {
+        "metric": "Pfirrmann forest/within_one_grade",
+        "unit": "",
+        "sprint2_extended": 0.8429,
+        "sprint3_coverage": 0.8333,
+        "sprint4_capacity": 0.8538,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": 0.0205,
+        "relative_delta_pct": 2.46,
+        "verdict_vs_s3": "improved"
+      }
+    ],
+    "worsened": [
+      {
+        "metric": "validation macro foreground Dice (best)",
+        "unit": "",
+        "sprint2_extended": 0.8985,
+        "sprint3_coverage": 0.89831,
+        "sprint4_capacity": 0.8936641561300577,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.004646,
+        "relative_delta_pct": -0.517,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/dice",
+        "unit": "",
+        "sprint2_extended": 0.9951361582860946,
+        "sprint3_coverage": 0.9952665506224332,
+        "sprint4_capacity": 0.9950300490062199,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000237,
+        "relative_delta_pct": -0.024,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/iou",
+        "unit": "",
+        "sprint2_extended": 0.9903194014711294,
+        "sprint3_coverage": 0.9905777012191657,
+        "sprint4_capacity": 0.9901092545327044,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000468,
+        "relative_delta_pct": -0.047,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test background/precision",
+        "unit": "",
+        "sprint2_extended": 0.9950933170598021,
+        "sprint3_coverage": 0.9953746299607197,
+        "sprint4_capacity": 0.9945235957991673,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000851,
+        "relative_delta_pct": -0.085,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test vertebra/dice",
+        "unit": "",
+        "sprint2_extended": 0.9133188035532562,
+        "sprint3_coverage": 0.9166250421944594,
+        "sprint4_capacity": 0.9111270265356556,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005498,
+        "relative_delta_pct": -0.6,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test vertebra/iou",
+        "unit": "",
+        "sprint2_extended": 0.8404661887402192,
+        "sprint3_coverage": 0.8460829148674011,
+        "sprint4_capacity": 0.8367615403629914,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.009321,
+        "relative_delta_pct": -1.102,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test vertebra/recall",
+        "unit": "",
+        "sprint2_extended": 0.9089064569458621,
+        "sprint3_coverage": 0.9137684379059444,
+        "sprint4_capacity": 0.8976822339865425,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016086,
+        "relative_delta_pct": -1.76,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/dice",
+        "unit": "",
+        "sprint2_extended": 0.8779045274169535,
+        "sprint3_coverage": 0.8782746012285413,
+        "sprint4_capacity": 0.8731271878007227,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005147,
+        "relative_delta_pct": -0.586,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/iou",
+        "unit": "",
+        "sprint2_extended": 0.7823795290752139,
+        "sprint3_coverage": 0.7829675624626573,
+        "sprint4_capacity": 0.7748231906462201,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.008144,
+        "relative_delta_pct": -1.04,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test intervertebral_disc/recall",
+        "unit": "",
+        "sprint2_extended": 0.8848250213220693,
+        "sprint3_coverage": 0.8950862384748363,
+        "sprint4_capacity": 0.8779615642733007,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.017125,
+        "relative_delta_pct": -1.913,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/dice",
+        "unit": "",
+        "sprint2_extended": 0.9025608597591165,
+        "sprint3_coverage": 0.9051365131188096,
+        "sprint4_capacity": 0.8975503784595036,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.007586,
+        "relative_delta_pct": -0.838,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/iou",
+        "unit": "",
+        "sprint2_extended": 0.8224245214736993,
+        "sprint3_coverage": 0.8267117535330054,
+        "sprint4_capacity": 0.8141418536706657,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.01257,
+        "relative_delta_pct": -1.52,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test spinal_canal/recall",
+        "unit": "",
+        "sprint2_extended": 0.9127700831840023,
+        "sprint3_coverage": 0.9152878680433565,
+        "sprint4_capacity": 0.8992199476826473,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016068,
+        "relative_delta_pct": -1.756,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/dice",
+        "unit": "",
+        "sprint2_extended": 0.8979280635764421,
+        "sprint3_coverage": 0.9000120521806035,
+        "sprint4_capacity": 0.8939348642652939,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.006077,
+        "relative_delta_pct": -0.675,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/iou",
+        "unit": "",
+        "sprint2_extended": 0.8150900797630442,
+        "sprint3_coverage": 0.8185874102876879,
+        "sprint4_capacity": 0.8085755282266257,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.010012,
+        "relative_delta_pct": -1.223,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test macro_foreground/recall",
+        "unit": "",
+        "sprint2_extended": 0.9021671871506446,
+        "sprint3_coverage": 0.9080475148080458,
+        "sprint4_capacity": 0.8916212486474969,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.016426,
+        "relative_delta_pct": -1.809,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test pixel_accuracy",
+        "unit": "",
+        "sprint2_extended": 0.9906705425192255,
+        "sprint3_coverage": 0.990920134567684,
+        "sprint4_capacity": 0.990459304889196,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000461,
+        "relative_delta_pct": -0.047,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/background",
+        "unit": "",
+        "sprint2_extended": 0.995219324304875,
+        "sprint3_coverage": 0.9953082178983877,
+        "sprint4_capacity": 0.9950714548791093,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.000237,
+        "relative_delta_pct": -0.024,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/background",
+        "unit": "",
+        "sprint2_extended": 0.001034545782236284,
+        "sprint3_coverage": 0.001021620483997883,
+        "sprint4_capacity": 0.001126893040047991,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.000105,
+        "relative_delta_pct": 10.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/vertebra",
+        "unit": "",
+        "sprint2_extended": 0.9140512378366564,
+        "sprint3_coverage": 0.9163748670339641,
+        "sprint4_capacity": 0.9110611348674763,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005314,
+        "relative_delta_pct": -0.58,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/vertebra",
+        "unit": "",
+        "sprint2_extended": 0.016763689717991723,
+        "sprint3_coverage": 0.015716967087072348,
+        "sprint4_capacity": 0.019629400874375914,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.003912,
+        "relative_delta_pct": 24.893,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/intervertebral_disc",
+        "unit": "",
+        "sprint2_extended": 0.8867838384169692,
+        "sprint3_coverage": 0.8868402921886553,
+        "sprint4_capacity": 0.8815590002194015,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.005281,
+        "relative_delta_pct": -0.596,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice_sd/intervertebral_disc",
+        "unit": "",
+        "sprint2_extended": 0.029906965676921055,
+        "sprint3_coverage": 0.029380766421101746,
+        "sprint4_capacity": 0.03105549126159604,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.001675,
+        "relative_delta_pct": 5.7,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "test per_patient_dice/spinal_canal",
+        "unit": "",
+        "sprint2_extended": 0.9025260226445113,
+        "sprint3_coverage": 0.9041795218212408,
+        "sprint4_capacity": 0.8960848899704423,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.008095,
+        "relative_delta_pct": -0.895,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_index_correct",
+        "unit": "%",
+        "sprint2_extended": 82.25,
+        "sprint3_coverage": 84.08,
+        "sprint4_capacity": 82.7,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.38,
+        "relative_delta_pct": -1.641,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_region_found",
+        "unit": "%",
+        "sprint2_extended": 95.73,
+        "sprint3_coverage": 96.66,
+        "sprint4_capacity": 95.4,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.26,
+        "relative_delta_pct": -1.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_slices_count_correct",
+        "unit": "%",
+        "sprint2_extended": 75.53,
+        "sprint3_coverage": 77.16,
+        "sprint4_capacity": 75.77,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.39,
+        "relative_delta_pct": -1.801,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing pct_slices_all_discs_correct",
+        "unit": "%",
+        "sprint2_extended": 75.11,
+        "sprint3_coverage": 77.95,
+        "sprint4_capacity": 75.11,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -2.84,
+        "relative_delta_pct": -3.643,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/correct",
+        "unit": "%",
+        "sprint2_extended": 82.25,
+        "sprint3_coverage": 84.08,
+        "sprint4_capacity": 82.7,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.38,
+        "relative_delta_pct": -1.641,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/shifted",
+        "unit": "%",
+        "sprint2_extended": 12.97,
+        "sprint3_coverage": 12.1,
+        "sprint4_capacity": 12.18,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.08,
+        "relative_delta_pct": 0.661,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/split",
+        "unit": "%",
+        "sprint2_extended": 0.51,
+        "sprint3_coverage": 0.45,
+        "sprint4_capacity": 0.51,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.06,
+        "relative_delta_pct": 13.333,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "indexing category %/missed",
+        "unit": "%",
+        "sprint2_extended": 4.27,
+        "sprint3_coverage": 3.34,
+        "sprint4_capacity": 4.6,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.26,
+        "relative_delta_pct": 37.725,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_identification pct_discs_index_correct",
+        "unit": "%",
+        "sprint2_extended": 82.6,
+        "sprint3_coverage": 84.42,
+        "sprint4_capacity": 83.01,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.41,
+        "relative_delta_pct": -1.67,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_identification pct_discs_region_found",
+        "unit": "%",
+        "sprint2_extended": 95.68,
+        "sprint3_coverage": 96.66,
+        "sprint4_capacity": 95.4,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.26,
+        "relative_delta_pct": -1.304,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_identification pct_slices_with_matching_disc_count",
+        "unit": "%",
+        "sprint2_extended": 75.71,
+        "sprint3_coverage": 77.16,
+        "sprint4_capacity": 75.77,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -1.39,
+        "relative_delta_pct": -1.801,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_central/mae",
+        "unit": "mm",
+        "sprint2_extended": 0.8065,
+        "sprint3_coverage": 0.7634,
+        "sprint4_capacity": 0.8658,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.1024,
+        "relative_delta_pct": 13.414,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_central/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8875,
+        "sprint3_coverage": 0.887,
+        "sprint4_capacity": 0.8851,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0019,
+        "relative_delta_pct": -0.214,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_central/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 11.42,
+        "sprint3_coverage": 10.82,
+        "sprint4_capacity": 12.29,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.47,
+        "relative_delta_pct": 13.586,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/mae",
+        "unit": "mm",
+        "sprint2_extended": 0.878,
+        "sprint3_coverage": 0.8425,
+        "sprint4_capacity": 0.9759,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.1334,
+        "relative_delta_pct": 15.834,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8535,
+        "sprint3_coverage": 0.8437,
+        "sprint4_capacity": 0.833,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0107,
+        "relative_delta_pct": -1.268,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_anterior/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 13.44,
+        "sprint3_coverage": 12.91,
+        "sprint4_capacity": 14.97,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 2.06,
+        "relative_delta_pct": 15.957,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_mm_posterior/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 15.5,
+        "sprint3_coverage": 15.23,
+        "sprint4_capacity": 15.25,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.02,
+        "relative_delta_pct": 0.131,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "area_mm2/mae",
+        "unit": "mm2",
+        "sprint2_extended": 25.3431,
+        "sprint3_coverage": 24.8986,
+        "sprint4_capacity": 28.4629,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 3.5643,
+        "relative_delta_pct": 14.315,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "area_mm2/mae_pct_of_gt_mean",
+        "unit": "mm2",
+        "sprint2_extended": 11.87,
+        "sprint3_coverage": 11.68,
+        "sprint4_capacity": 13.37,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 1.69,
+        "relative_delta_pct": 14.469,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/mae",
+        "unit": "mm",
+        "sprint2_extended": 1.9865,
+        "sprint3_coverage": 1.9955,
+        "sprint4_capacity": 2.1685,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.173,
+        "relative_delta_pct": 8.67,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.7766,
+        "sprint3_coverage": 0.7712,
+        "sprint4_capacity": 0.7576,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0136,
+        "relative_delta_pct": -1.763,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "ap_extent_mm/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 5.89,
+        "sprint3_coverage": 5.92,
+        "sprint4_capacity": 6.44,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.52,
+        "relative_delta_pct": 8.784,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.1186,
+        "sprint3_coverage": 0.1123,
+        "sprint4_capacity": 0.1192,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0069,
+        "relative_delta_pct": 6.144,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.8356,
+        "sprint3_coverage": 0.8481,
+        "sprint4_capacity": 0.8373,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0108,
+        "relative_delta_pct": -1.273,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "height_ratio_to_series_median/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 11.42,
+        "sprint3_coverage": 10.82,
+        "sprint4_capacity": 11.5,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.68,
+        "relative_delta_pct": 6.285,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.1361,
+        "sprint3_coverage": 0.1372,
+        "sprint4_capacity": 0.1384,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0012,
+        "relative_delta_pct": 0.875,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.6467,
+        "sprint3_coverage": 0.675,
+        "sprint4_capacity": 0.6333,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0417,
+        "relative_delta_pct": -6.178,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "disc_to_vertebra_height_ratio/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 71.29,
+        "sprint3_coverage": 71.87,
+        "sprint4_capacity": 72.51,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.64,
+        "relative_delta_pct": 0.89,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/mae",
+        "unit": "mm",
+        "sprint2_extended": 1.1298,
+        "sprint3_coverage": 1.1513,
+        "sprint4_capacity": 1.1665,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.0152,
+        "relative_delta_pct": 1.32,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/pearson_r",
+        "unit": "mm",
+        "sprint2_extended": 0.8107,
+        "sprint3_coverage": 0.8065,
+        "sprint4_capacity": 0.7827,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0238,
+        "relative_delta_pct": -2.951,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "canal_width_at_disc_mm/mae_pct_of_gt_mean",
+        "unit": "mm",
+        "sprint2_extended": 10.13,
+        "sprint3_coverage": 10.33,
+        "sprint4_capacity": 10.46,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.13,
+        "relative_delta_pct": 1.258,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/mae",
+        "unit": "ratio",
+        "sprint2_extended": 0.036,
+        "sprint3_coverage": 0.0364,
+        "sprint4_capacity": 0.0384,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.002,
+        "relative_delta_pct": 5.495,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/pearson_r",
+        "unit": "ratio",
+        "sprint2_extended": 0.9638,
+        "sprint3_coverage": 0.9639,
+        "sprint4_capacity": 0.9563,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0076,
+        "relative_delta_pct": -0.788,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "intensity_disc_vertebra_ratio/mae_pct_of_gt_mean",
+        "unit": "ratio",
+        "sprint2_extended": 9.09,
+        "sprint3_coverage": 9.2,
+        "sprint4_capacity": 9.7,
+        "higher_is_better": false,
+        "delta_s4_vs_s3": 0.5,
+        "relative_delta_pct": 5.435,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "Pfirrmann logreg/exact_agreement",
+        "unit": "",
+        "sprint2_extended": 0.3571,
+        "sprint3_coverage": 0.3714,
+        "sprint4_capacity": 0.3585,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0129,
+        "relative_delta_pct": -3.473,
+        "verdict_vs_s3": "worsened"
+      },
+      {
+        "metric": "Pfirrmann forest/exact_agreement",
+        "unit": "",
+        "sprint2_extended": 0.4048,
+        "sprint3_coverage": 0.4381,
+        "sprint4_capacity": 0.434,
+        "higher_is_better": true,
+        "delta_s4_vs_s3": -0.0041,
+        "relative_delta_pct": -0.936,
+        "verdict_vs_s3": "worsened"
+      }
+    ]
+  },
+  "decision": {
+    "question": "Does increasing U-Net capacity from width 16 to width 32 provide a meaningful improvement after training-data coverage has already been fixed?",
+    "answer": "No.",
+    "verdict": "no improvement - width 32 is measurably worse",
+    "hypothesis_supported": false,
+    "decision_rule": {
+      "primary": "best validation foreground Dice",
+      "min_delta": 0.001,
+      "material_test_margin": 0.005,
+      "requires": "validation AND test AND no per-class regression"
+    },
+    "evidence": {
+      "val_fg_dice_delta": -0.00465,
+      "val_delta_in_min_deltas": 4.65,
+      "test_macro_fg_dice_delta": -0.00608,
+      "per_class_dice_delta": {
+        "vertebra": -0.0055,
+        "intervertebral_disc": -0.00515,
+        "spinal_canal": -0.00759
+      },
+      "indexing_taxonomy_delta_pp": -1.38,
+      "indexing_identification_delta_pp": -1.41,
+      "pfirrmann_forest_qwk_delta": 0.0114,
+      "height_mm_central_mae_delta": 0.1024,
+      "n_quality_metrics_improved": 18,
+      "n_quality_metrics_worsened": 61,
+      "epoch_slowdown_vs_sprint3": 2.71,
+      "test_patients": 33,
+      "test_slices": 1655
+    },
+    "narrative": "**Verdict: no improvement - width 32 is measurably worse.** Quadrupling the parameter count from 1,963,860 to 7,849,124 moved the primary criterion the wrong way: best validation foreground Dice went 0.89831 -> 0.89366 (-0.00465), a drop 4.6x larger than the 0.001 min_delta the experiment was configured to treat as real. The held-out test set agrees rather than contradicting: macro foreground Dice -0.00608, and every foreground class is down (vertebra -0.00550, IVD -0.00515, canal -0.00759). Disc indexing falls too (-1.38 pp on the corrected taxonomy, -1.41 pp on the evaluate_unet estimator). Across all compared quality metrics 18 improved and 61 worsened. The exception worth naming is the end-to-end Pfirrmann agreement, which rose +0.0114 QWK - but that is measured on ~212 discs and is not enough to offset a consistent segmentation regression. All of this cost 2.71x the time per epoch (16.47 h against 5.88 h). **Increasing U-Net width is therefore not the lever that improves this pipeline.**"
+  },
+  "recommendation": {
+    "option": "B",
+    "title": "Disc-indexing and post-processing pipeline (no retraining)",
+    "rationale": "Width 32 did not improve segmentation, and Sprint 3 already showed that data coverage was not the binding constraint either. Two independent capacity/data experiments have now failed to move the segmentation plateau, which is evidence that the remaining error is not where the last two sprints looked. The disc-indexing stage is where the measurable loss actually is: the network recovers the disc region on about 95-97% of discs but assigns the correct integer index on only about 83-84%, so roughly 12-13 pp of usable accuracy is lost to ordering and fragmentation of already-detected regions, not to segmentation quality. That gap is addressable with post-processing on the existing predictions and needs no new training run.",
+    "why_not_more_capacity": "Width 32 cost 2.71x the time per epoch for a -0.00465 validation change. Width 64 was measured in the Sprint 3 audit at ~6.8 GB peak commit and 216-326 h for 30 epochs, so it remains infeasible on this hardware, and there is now direct evidence that more width does not help at this data scale.",
+    "proposed_steps": [
+      "Work from the existing saved predictions - no retraining, no new architecture.",
+      "Enforce geometric ordering across a whole series rather than per-slice, using the fact that series-level disc ordering is far more reliable than per-slice ordering.",
+      "Merge fragmented components before indexing, and reject components below a size threshold calibrated on the training split only.",
+      "Re-score the corrected taxonomy on the test set once, after the post-processing rule is fixed on train/validation data."
+    ],
+    "success_criterion": "Raise the corrected-taxonomy index-correct rate from its current level (Sprint 3 remains the best at 84.08%) towards the region-found ceiling, without retraining.",
+    "segmentation_candidate": "Sprint 3 Coverage, the width-16 model: it holds the best validation Dice (0.89831), the best test macro foreground Dice (0.90001) and the best disc indexing, at a quarter of the parameters and a third of the training time.",
+    "current_sprint4_indexing_pct": 83.01,
+    "do_not_start_automatically": true
+  },
+  "figures": [
+    "training_curves.png",
+    "sprint3_vs_sprint4_curves.png",
+    "three_way_test_comparison.png",
+    "computational_cost.png",
+    "indexing_comparison.png",
+    "measurement_agreement.png",
+    "segmentation_metrics.png",
+    "predictions/pred_test_best_12_t1_s006.png",
+    "predictions/pred_test_best_171_t2_s008.png",
+    "predictions/pred_test_best_219_t1_s007.png",
+    "predictions/pred_test_median_166_t2_SPACE_s022.png",
+    "predictions/pred_test_median_80_t1_s007.png",
+    "predictions/pred_test_median_98_t2_SPACE_s049.png",
+    "predictions/pred_test_midsagittal_11_t2_s010.png",
+    "predictions/pred_test_midsagittal_166_t2_SPACE_s060.png",
+    "predictions/pred_test_midsagittal_171_t1_s008.png",
+    "predictions/pred_test_worst_11_t2_s018.png",
+    "predictions/pred_test_worst_11_t2_SPACE_s018.png",
+    "predictions/pred_test_worst_53_t1_s015.png"
+  ],
+  "reference_results": {
+    "sprint3_coverage": {
+      "val_fg_dice": 0.89831,
+      "base_channels": 16,
+      "batch_size": 8,
+      "params": 1963860,
+      "epochs_completed": 29,
+      "wall_hours": 5.88,
+      "mean_epoch_seconds": 730.2,
+      "stopped_early": true
+    },
+    "sprint2_extended": {
+      "val_fg_dice": 0.8985,
+      "base_channels": 16,
+      "batch_size": 8,
+      "params": 1963860,
+      "epochs_completed": 30,
+      "stopped_early": false
+    }
+  }
+}

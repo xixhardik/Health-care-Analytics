@@ -1,0 +1,49 @@
+{
+  "experiment": "sprint2_extended",
+  "max_epochs": 30,
+  "batch_size": 8,
+  "lr": 0.001,
+  "base_channels": 16,
+  "depth": 4,
+  "downsample": 1,
+  "input_size": [
+    352,
+    256
+  ],
+  "augment": true,
+  "seed": 42,
+  "loss": "CrossEntropy + soft Dice (equal weight)",
+  "optimiser": "Adam",
+  "scheduler": "CosineAnnealingLR(T_max=30)",
+  "early_stopping": {
+    "monitor": "val_fg_dice",
+    "patience": 6,
+    "min_delta": 0.0
+  },
+  "model": "UNet(in=1, classes=4, base=16, depth=4, bilinear=True) 1,963,860 params",
+  "n_parameters": {
+    "total": 1963860,
+    "trainable": 1963860
+  },
+  "device": "cpu",
+  "memory_format": "channels_last",
+  "bf16_autocast": false,
+  "slices_used": {
+    "train": 2560,
+    "val": 800
+  },
+  "patients_used": {
+    "train": 152,
+    "val": 33
+  },
+  "test_set_used_during_training": false,
+  "selection_metric": "validation macro foreground Dice",
+  "controlled_variable": "number of epochs (12 -> up to 30); all else fixed",
+  "resume": {
+    "mode": "full_from_experiment_checkpoint",
+    "resumed_at_epoch": 30,
+    "source": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint2_extended\\last.pt",
+    "optimiser_state_restored": true,
+    "note": "Exact continuation: optimiser, scheduler and RNG restored."
+  }
+}

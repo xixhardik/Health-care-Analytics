@@ -1,0 +1,122 @@
+{
+  "experiment": "sprint4_capacity",
+  "controlled_variable": "model capacity (U-Net base channels 16 -> 32)",
+  "changed": {
+    "base_channels": {
+      "from": 16,
+      "to": 32
+    },
+    "parameters": {
+      "from": 1963860,
+      "to": 7849124,
+      "ratio": 3.997
+    },
+    "batch_size": {
+      "from": 8,
+      "to": 2,
+      "status": "co-varying dependency, not an independent choice",
+      "rationale": "Width 32 at batch 8 was measured in the Sprint 3 audit at ~3,834 MB peak commit (1.5x the memory-proven level) and 80 h for 30 full-coverage epochs. At batch 2 it needs ~1,823 MB, below the proven width-16/batch-8 level of ~2,534 MB, and ~16.9 h for 30 rotating epochs. Batch 2 is what makes width 32 runnable on this hardware."
+    }
+  },
+  "unchanged_from_sprint3_coverage": {
+    "topology": "plain U-Net, BatchNorm, bilinear upsampling",
+    "depth": 4,
+    "bilinear": true,
+    "sampler": "rotating shard sampler",
+    "slices_per_epoch": 2284,
+    "coverage_pct_over_run": 100.0,
+    "epochs_to_full_coverage": 4,
+    "optimiser": "Adam",
+    "lr": 0.001,
+    "scheduler": "CosineAnnealingLR(T_max=30)",
+    "loss": "CrossEntropy + soft Dice (equal weight)",
+    "augmentation": "translate +/-5% + intensity jitter, train only",
+    "preprocessing": "Sprint 1 slices, 352x256 at 1.0 mm/px",
+    "seed": 42,
+    "split": "Sprint 1 patient-level",
+    "validation_slices": 800,
+    "n_classes": 4,
+    "input_size": [
+      352,
+      256
+    ],
+    "memory_format": "channels_last",
+    "bf16_autocast": false,
+    "early_stopping": {
+      "monitor": "val_fg_dice",
+      "patience": 6,
+      "min_delta": 0.001
+    }
+  },
+  "different_by_design": {
+    "initialisation": "random. NOT resumed from Sprint 3, NOT warm-started from Sprint 2 - the layer shapes differ, and warm-starting would confound the capacity variable.",
+    "validation_batch_size": "2 rather than Sprint 3's 8. Verified in the smoke test to leave the validation Dice bit-identical: BatchNorm runs in eval mode and the confusion matrix accumulates over the full 800 slices, so the metric stays directly comparable to Sprint 3's 0.89831."
+  },
+  "architecture": "UNet(in=1, classes=4, base=32, depth=4, bilinear=True) 7,849,124 params",
+  "parameters": {
+    "total": 7849124,
+    "trainable": 7849124
+  },
+  "sampler_verification": {
+    "leakage_free": true,
+    "violations": 0,
+    "val_test_patients_excluded": 66,
+    "coverage": {
+      "strategy": "rotating",
+      "n_epochs_simulated": 30,
+      "slices_per_epoch_requested": 2284,
+      "slices_per_epoch_actual": 2284,
+      "train_slices_total": 9128,
+      "unique_slices_seen": 9128,
+      "coverage_pct": 100.0,
+      "slices_never_seen": 0,
+      "epochs_to_full_coverage": 4,
+      "times_seen": {
+        "min": 7,
+        "mean": 7.51,
+        "max": 8,
+        "std": 0.5
+      }
+    }
+  },
+  "reference_results": {
+    "sprint3_coverage": {
+      "val_fg_dice": 0.89831,
+      "test_macro_fg_dice": 0.90001,
+      "test_vertebra_dice": 0.91663,
+      "test_ivd_dice": 0.87827,
+      "test_canal_dice": 0.90514,
+      "disc_indexing_pct_evaluate_unet": 84.42,
+      "disc_indexing_pct_taxonomy": 84.08,
+      "pfirrmann_qwk": 0.6317,
+      "base_channels": 16,
+      "batch_size": 8,
+      "params": 1963860,
+      "epochs_completed": 29,
+      "wall_hours": 5.88,
+      "mean_epoch_seconds": 730.2
+    },
+    "sprint2_extended": {
+      "val_fg_dice": 0.8985,
+      "test_macro_fg_dice": 0.8979,
+      "test_vertebra_dice": 0.9133,
+      "test_ivd_dice": 0.8779,
+      "test_canal_dice": 0.9026,
+      "disc_indexing_pct_evaluate_unet": 82.6,
+      "pfirrmann_qwk": 0.6375
+    }
+  },
+  "smoke_test": {
+    "verdict": "PASS",
+    "n_passed": 25,
+    "n_failed": 0,
+    "projected_30_epoch_hours": 16.4,
+    "peak_commit_mb": 1931.4
+  },
+  "test_set_used_during_training": false,
+  "device": "cpu",
+  "resume": {
+    "mode": "fresh_random_init",
+    "resumed_at_epoch": 0
+  }
+}

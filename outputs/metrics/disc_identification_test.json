@@ -1,0 +1,11 @@
+{
+  "n_slices": 1655,
+  "n_truth_discs_total": 6821,
+  "n_predicted_discs_total": 6791,
+  "n_regions_found": 6503,
+  "n_index_correct": 5348,
+  "pct_slices_with_matching_disc_count": 74.26,
+  "pct_discs_region_found": 95.34,
+  "pct_discs_index_correct": 78.4,
+  "note": "Disc identity derived from the SEMANTIC prediction by ordered connected components. Measures how much segmentation error propagates into disc numbering. Ground-truth instance masks are used for the Stage D feature table precisely because of this."
+}

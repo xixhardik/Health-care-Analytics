@@ -1,0 +1,41 @@
+{
+  "experiment": "sprint3_coverage",
+  "controlled_variable": "training-slice coverage (fixed subset -> rotating)",
+  "resume": {
+    "mode": "fresh_random_init",
+    "resumed_at_epoch": 0
+  },
+  "epochs_completed": 29,
+  "max_epochs": 30,
+  "stopped_early": true,
+  "stop_reason": "validation foreground Dice did not improve for 6 consecutive epochs (best 0.8981 at epoch 28)",
+  "epochs_without_improvement_at_end": 6,
+  "best_val_dice": 0.8983064221268103,
+  "best_val_dice_epoch": 29,
+  "best_val_loss": 0.13368572302162648,
+  "best_val_loss_epoch": 28,
+  "unique_train_slices_seen": 9128,
+  "train_slices_available": 9128,
+  "coverage_pct_achieved": 100.0,
+  "wall_seconds": 21180.5,
+  "wall_minutes": 353.0,
+  "wall_hours": 5.88,
+  "mean_epoch_seconds": 730.2,
+  "restored_checkpoint": {
+    "criterion": "val_dice",
+    "path": "D:\\healthcare analytics\\lumbar-spine-segmentation\\outputs\\checkpoints\\sprint3_coverage\\best_val_dice.pt",
+    "metadata": {
+      "epoch": 29,
+      "val_fg_dice": 0.8983064221268103,
+      "val_loss": 0.1337073937058449,
+      "selection": "best validation foreground Dice"
+    }
+  },
+  "comparison_vs_sprint2_extended": {
+    "sprint2_extended_best_val_fg_dice": 0.8985,
+    "sprint3_best_val_fg_dice": 0.8983064221268103,
+    "delta": -0.00019,
+    "exceeded": false
+  },
+  "test_set_used_during_training": false
+}

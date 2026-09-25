@@ -1,0 +1,61 @@
+{
+  "n_series_sampled": 40,
+  "variant_means": {
+    "normalised only": {
+      "noise_sigma": 0.010475760306460555,
+      "boundary_sharpness": 0.11740958810442614,
+      "class_contrast_cnr": 2.13100991167642,
+      "dynamic_range_std": 0.26922800387433743,
+      "bias_inhomogeneity": 0.1899494792050686
+    },
+    "median 3x3": {
+      "noise_sigma": 0.0067554373063506284,
+      "boundary_sharpness": 0.09430145625079674,
+      "class_contrast_cnr": 2.2961191356468342,
+      "dynamic_range_std": 0.2663994537939512,
+      "bias_inhomogeneity": 0.19098645152965427
+    },
+    "gaussian 3x3": {
+      "noise_sigma": 0.0018101999458190639,
+      "boundary_sharpness": 0.08696400430709075,
+      "class_contrast_cnr": 2.30516581835697,
+      "dynamic_range_std": 0.2617569633729574,
+      "bias_inhomogeneity": 0.18993820901171588
+    },
+    "bilateral": {
+      "noise_sigma": 0.006255384416034444,
+      "boundary_sharpness": 0.10421538383606732,
+      "class_contrast_cnr": 2.2663701677404733,
+      "dynamic_range_std": 0.2671094084577052,
+      "bias_inhomogeneity": 0.19013860055250686
+    },
+    "CLAHE only": {
+      "noise_sigma": 0.031466985972913836,
+      "boundary_sharpness": 0.15838671225002446,
+      "class_contrast_cnr": 2.2545878177094485,
+      "dynamic_range_std": 0.2693863999723888,
+      "bias_inhomogeneity": 0.08855022977481333
+    },
+    "median + CLAHE": {
+      "noise_sigma": 0.012320830744813068,
+      "boundary_sharpness": 0.11737324867604834,
+      "class_contrast_cnr": 2.55622262423332,
+      "dynamic_range_std": 0.2576359298230312,
+      "bias_inhomogeneity": 0.10963962180835181
+    },
+    "gaussian + CLAHE": {
+      "noise_sigma": 0.006130489773873474,
+      "boundary_sharpness": 0.12269871371846978,
+      "class_contrast_cnr": 2.4793210807342096,
+      "dynamic_range_std": 0.2599344973684242,
+      "bias_inhomogeneity": 0.08444678580218656
+    }
+  },
+  "n4_timing": {
+    "n_volumes_tested": 3,
+    "mean_seconds_per_volume": 0.48,
+    "projected_hours_for_447": 0.06,
+    "mean_inhomogeneity_before": 0.15661,
+    "mean_inhomogeneity_after": 0.15656
+  }
+}

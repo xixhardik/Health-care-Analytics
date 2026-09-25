@@ -1,0 +1,118 @@
+{
+  "config": {
+    "target_spacing_mm": 1.0,
+    "target_size": [
+      352,
+      256
+    ],
+    "clip_percentiles": [
+      1.0,
+      99.0
+    ],
+    "normalize": true,
+    "denoise": true,
+    "denoise_method": "median",
+    "denoise_kernel": 3,
+    "enhance_contrast": true,
+    "clahe_clip_limit": 2.0,
+    "clahe_tile_grid": [
+      8,
+      8
+    ],
+    "bias_field_correction": false,
+    "keep_only_annotated_slices": true,
+    "min_labelled_area_mm2": 10.0
+  },
+  "dataset_size": {
+    "series_attempted": 447,
+    "series_succeeded": 447,
+    "series_failed": 0,
+    "patients": 218,
+    "slices_written": 12415,
+    "slices_available": 14070,
+    "slices_dropped_unannotated": 1655,
+    "slices_per_series_min": 8,
+    "slices_per_series_max": 120,
+    "slices_per_series_median": 22.0
+  },
+  "dimensions_before": {
+    "rows_min": 216,
+    "rows_max": 3682,
+    "cols_min": 264,
+    "cols_max": 1168,
+    "distinct_shapes": 149,
+    "row_spacing_min_mm": 0.0767,
+    "row_spacing_max_mm": 1.2331,
+    "col_spacing_min_mm": 0.248,
+    "col_spacing_max_mm": 1.0625
+  },
+  "dimensions_after": {
+    "rows": 352,
+    "cols": 256,
+    "spacing_mm": 1.0,
+    "distinct_shapes": 1,
+    "fov_rows_mm": 352.0,
+    "fov_cols_mm": 256.0
+  },
+  "intensity": {
+    "raw_min_values": {
+      "-1000.0": 374,
+      "0.0": 73
+    },
+    "raw_max_distinct_count": 70,
+    "raw_max_modal_value": 3096.0,
+    "raw_max_modal_count": 374,
+    "raw_max_range": [
+      349.0,
+      3096.0
+    ],
+    "series_with_padding": 447,
+    "processed_min": 0.0008850232698023,
+    "processed_max": 1.0,
+    "processed_mean": 0.31833481886996123,
+    "processed_std": 0.2720990107069561,
+    "processed_mean_min": 0.0809978768229484,
+    "processed_mean_max": 0.4732356369495392
+  },
+  "mask_integrity": {
+    "series_with_invented_labels": 0,
+    "series_with_lost_labels": 0,
+    "annotated_area_retained_mean": 1.000573879509291,
+    "annotated_area_retained_min": 0.9933374479735396,
+    "series_below_95pct_retention": 0
+  },
+  "class_distribution": {
+    "background": 1060235393,
+    "vertebra": 42031210,
+    "intervertebral_disc": 8839638,
+    "spinal_canal": 7634239
+  },
+  "class_distribution_pct_of_labelled": {
+    "vertebra": 71.842,
+    "intervertebral_disc": 15.109,
+    "spinal_canal": 13.049
+  },
+  "class_distribution_pct_of_all": {
+    "background": 94.7705,
+    "vertebra": 3.757,
+    "intervertebral_disc": 0.7901,
+    "spinal_canal": 0.6824
+  },
+  "missing_files": {
+    "raw_series_missing": 0,
+    "series_read_failures": []
+  },
+  "operations": [
+    "reorient every volume to a canonical RAS frame (loss-less axis permutation)",
+    "extract sagittal slices along the through-plane axis",
+    "drop slices with less than 10.0 mm2 of annotation",
+    "resample in-plane to 1.0 mm/px (image: area/bilinear, mask: nearest neighbour)",
+    "centre crop or zero-pad to 352x256 px",
+    "clip to foreground percentiles (1.0, 99.0) and scale to [0, 1]",
+    "median denoise, kernel 3",
+    "CLAHE clip=2.0 tiles=(8, 8)",
+    "collapse raw labels to 4 semantic classes and to a contiguous instance space",
+    "verify no label value was invented by the resize",
+    "save image (float16) + semantic mask (uint8) + instance mask (uint8) per slice"
+  ]
+}
