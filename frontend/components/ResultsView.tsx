@@ -331,7 +331,22 @@ export function ResultsView({ result }: { result: AnalysisResult }) {
   };
 
   return (
-    <div className="flex min-h-0 flex-col">
+    /*
+     * Viewport-constrained workspace, from `lg` upward - which is exactly where
+     * the two-column viewer/sidebar layout applies.
+     *
+     * The height matters more than it looks. Every ancestor (`min-h-screen`,
+     * `flex-1`, `main`) grows to its content, so without a definite height here
+     * the sidebar's `overflow-y-auto` has nothing to scroll inside: the grid row
+     * takes the sidebar's full content height, the viewer canvas stretches to
+     * match it, and the centred MRI ends up a screen and a half down the page.
+     * Bounding this one element makes the sidebar the scrolling region instead of
+     * the document, and the MRI lands inside the first viewport.
+     *
+     * Below `lg` the layout is a single stacked column with a bottom sheet, which
+     * should keep scrolling as a document - so the constraint is not applied.
+     */
+    <div className="flex min-h-0 flex-col lg:h-[calc(100vh-3.5rem)] lg:overflow-hidden">
       <ResearchBanner />
       {result.demo_stage ? <DemoStageBanner stage={result.demo_stage} /> : null}
       {result.demo_stage ? <DemoStageSwitcher stage={result.demo_stage} /> : null}
@@ -424,7 +439,9 @@ export function ResultsView({ result }: { result: AnalysisResult }) {
               })}
             </span>
           </div>
-          <div className="min-h-[380px] flex-1">
+          {/* `lg:min-h-0` lets this shrink inside the bounded workspace; the
+              380px floor still applies on stacked layouts. */}
+          <div className="min-h-[380px] flex-1 lg:min-h-0">
             {/*
               Both viewers read the same `selected` disc and the same
               server-decided finding overlay, so they cannot disagree. The 2D

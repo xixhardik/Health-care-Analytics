@@ -28,6 +28,7 @@ import {
   Maximize2,
   Minimize2,
   RotateCcw,
+  RotateCw,
 } from "lucide-react";
 import * as React from "react";
 
@@ -53,10 +54,26 @@ export interface Mri3DViewerProps {
   onSelectDisc?: (discIndex: number) => void;
 }
 
+/**
+ * Idle auto-rotation. Slow on purpose: a full revolution takes roughly 24
+ * seconds, which reads as a research visualisation rather than a spinning logo.
+ * Rotation is time-based rather than per-frame so it looks the same on a 60 Hz and
+ * a 144 Hz display.
+ */
+const AUTO_ROTATE_DEG_PER_SEC = 15;
+
+/** How long the viewer must be untouched before rotation starts or resumes. */
+const AUTO_ROTATE_IDLE_MS = 1800;
+
 /** Everything VTK owns, so unmount can release all of it. */
 interface Scene {
   renderWindow: { delete: () => void; render: () => void };
-  renderer: { delete: () => void; resetCamera: () => void };
+  renderer: {
+    delete: () => void;
+    resetCamera: () => void;
+    resetCameraClippingRange: () => void;
+    getActiveCamera: () => { azimuth: (degrees: number) => void };
+  };
   openGL: { delete: () => void; setContainer: (c: HTMLElement | null) => void };
   interactor: { delete: () => void; setContainer: (c: HTMLElement | null) => void };
   mriActor: { delete: () => void; setVisibility: (v: boolean) => void };
@@ -90,6 +107,24 @@ export function Mri3DViewer({
   const [showFindings, setShowFindings] = React.useState(true);
   const [visibleClasses, setVisibleClasses] = React.useState<number[]>([1, 2, 3]);
   const [fullscreen, setFullscreen] = React.useState(false);
+
+  /**
+   * User preference, on by default. Off stays off until the user turns it back
+   * on - an explicit choice is not overridden by the idle timer.
+   *
+   * Defaults to off when the operating system asks for reduced motion:
+   * continuous rotation is exactly the kind of animation that setting is for.
+   */
+  const [autoRotate, setAutoRotate] = React.useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return true;
+    return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
+  /** Whether rotation is actually running right now, for the indicator. */
+  const [rotating, setRotating] = React.useState(false);
+
+  const frameRef = React.useRef<number | null>(null);
+  const idleTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastFrameRef = React.useRef<number | null>(null);
 
   const markedDiscs = findingOverlay?.disc_indices ?? [];
 
@@ -374,10 +409,131 @@ export function Mri3DViewer({
     scene.render();
   }, [status, showMri, mriOpacity]);
 
-  const toggleClass = (id: number, next: boolean) =>
+  /* ---------------------------------------------- idle auto-rotation */
+
+  const stopRotation = React.useCallback(() => {
+    if (frameRef.current != null) {
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
+    lastFrameRef.current = null;
+    setRotating(false);
+  }, []);
+
+  /**
+   * Mark the viewer as being interacted with: stop rotating now, and schedule a
+   * resume once the user has been still for the idle delay. Called from the
+   * pointer/wheel/touch/key listeners and from every control that moves the
+   * camera, so auto-rotation never fights a manual gesture.
+   */
+  const deferRotation = React.useCallback(() => {
+    stopRotation();
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      idleTimerRef.current = null;
+      // Re-read the ref rather than closing over state: by the time this fires,
+      // the scene may have been torn down by a stage or study change.
+      if (sceneRef.current) setRotating(true);
+    }, AUTO_ROTATE_IDLE_MS);
+  }, [stopRotation]);
+
+  React.useEffect(() => {
+    // Nothing to drive, or the user switched it off: stay idle, do not throw.
+    if (status !== "ready" || !autoRotate) {
+      stopRotation();
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      return;
+    }
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // A pointer moving without a button held is not camera interaction.
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.buttons !== 0) deferRotation();
+    };
+    const onAny = () => deferRotation();
+
+    container.addEventListener("pointerdown", onAny);
+    container.addEventListener("pointermove", onPointerMove);
+    container.addEventListener("wheel", onAny, { passive: true });
+    container.addEventListener("touchstart", onAny, { passive: true });
+    container.addEventListener("touchmove", onAny, { passive: true });
+    container.addEventListener("keydown", onAny);
+
+    // Start from idle rather than immediately, so opening the tab does not look
+    // like the volume is being dragged.
+    deferRotation();
+
+    return () => {
+      container.removeEventListener("pointerdown", onAny);
+      container.removeEventListener("pointermove", onPointerMove);
+      container.removeEventListener("wheel", onAny);
+      container.removeEventListener("touchstart", onAny);
+      container.removeEventListener("touchmove", onAny);
+      container.removeEventListener("keydown", onAny);
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      stopRotation();
+    };
+  }, [status, autoRotate, deferRotation, stopRotation]);
+
+  /** The animation loop itself, driven purely by the `rotating` flag. */
+  React.useEffect(() => {
+    if (!rotating) return;
+
+    const step = (timestamp: number) => {
+      const scene = sceneRef.current;
+      // The scene can disappear mid-flight when a stage changes. Stop quietly.
+      if (!scene) {
+        frameRef.current = null;
+        return;
+      }
+      // The first frame has no previous timestamp to measure against. Record it
+      // and wait: rotating by zero degrees and re-rendering would be wasted work.
+      if (lastFrameRef.current == null) {
+        lastFrameRef.current = timestamp;
+        frameRef.current = requestAnimationFrame(step);
+        return;
+      }
+      const seconds = (timestamp - lastFrameRef.current) / 1000;
+      lastFrameRef.current = timestamp;
+
+      try {
+        scene.renderer.getActiveCamera().azimuth(
+          AUTO_ROTATE_DEG_PER_SEC * seconds,
+        );
+        scene.renderer.resetCameraClippingRange();
+        scene.render();
+      } catch {
+        // A torn-down renderer must not throw out of an animation frame.
+        frameRef.current = null;
+        return;
+      }
+      frameRef.current = requestAnimationFrame(step);
+    };
+
+    frameRef.current = requestAnimationFrame(step);
+    return () => {
+      if (frameRef.current != null) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+      lastFrameRef.current = null;
+    };
+  }, [rotating]);
+
+  const toggleClass = (id: number, next: boolean) => {
+    deferRotation();
     setVisibleClasses((current) =>
       next ? [...current, id].sort() : current.filter((v) => v !== id),
     );
+  };
 
   const controlsDisabled = status !== "ready";
 
@@ -399,11 +555,29 @@ export function Mri3DViewer({
             {markedDiscs.length} finding-associated
           </Badge>
         ) : null}
+        {rotating ? (
+          <span
+            data-testid="auto-rotate-indicator"
+            className="inline-flex items-center gap-1 text-2xs text-ink-faint"
+            aria-live="off"
+          >
+            <RotateCw
+              className="h-3 w-3 animate-spin"
+              style={{ animationDuration: "6s" }}
+              aria-hidden
+            />
+            Auto-rotate
+          </span>
+        ) : null}
         <div className="ml-auto flex items-center gap-1">
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => sceneRef.current?.resetCamera()}
+            onClick={() => {
+              // Resetting the camera is interaction: pause, then resume on idle.
+              deferRotation();
+              sceneRef.current?.resetCamera();
+            }}
             disabled={controlsDisabled}
             aria-label="Reset camera"
           >
@@ -463,6 +637,7 @@ export function Mri3DViewer({
           <p className="pointer-events-none absolute bottom-2 left-2 rounded bg-surface-0/85 px-2 py-1 font-mono text-2xs text-ink-faint backdrop-blur">
             drag rotate · wheel zoom · middle-drag pan
             {highlightDisc != null ? ` · disc ${highlightDisc} highlighted` : ""}
+            {autoRotate ? (rotating ? " · auto-rotate" : " · auto-rotate · idle") : ""}
           </p>
         ) : null}
       </div>
@@ -473,23 +648,38 @@ export function Mri3DViewer({
           <span className="label-caps">Layers</span>
           <Toggle
             checked={showMri}
-            onChange={setShowMri}
+            onChange={(next) => {
+              deferRotation();
+              setShowMri(next);
+            }}
             label="MRI"
             disabled={controlsDisabled}
           />
           <Toggle
             checked={showSegmentation}
-            onChange={setShowSegmentation}
+            onChange={(next) => {
+              deferRotation();
+              setShowSegmentation(next);
+            }}
             label="Segmentation"
             swatch={SEG_CLASSES[1]?.hex}
             disabled={controlsDisabled}
           />
           <Toggle
             checked={showFindings}
-            onChange={setShowFindings}
+            onChange={(next) => {
+              deferRotation();
+              setShowFindings(next);
+            }}
             label="Findings"
             swatch={FINDING_OVERLAY.hex}
             disabled={controlsDisabled || markedDiscs.length === 0}
+          />
+          <Toggle
+            checked={autoRotate}
+            onChange={setAutoRotate}
+            label="Auto-rotate"
+            disabled={controlsDisabled}
           />
         </div>
 
@@ -519,7 +709,10 @@ export function Mri3DViewer({
             step={0.05}
             value={mriOpacity}
             disabled={controlsDisabled || !showMri}
-            onChange={(event) => setMriOpacity(Number(event.target.value))}
+            onChange={(event) => {
+              deferRotation();
+              setMriOpacity(Number(event.target.value));
+            }}
             className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-surface-3 accent-accent disabled:opacity-40"
           />
           <span className="w-9 text-right font-mono text-2xs text-ink-muted">

@@ -246,7 +246,7 @@ export function MriViewer({
         onKeyDown={onKeyDown}
         role="group"
         aria-label={`MRI slice viewer, slice ${index + 1} of ${sliceCount}. Use arrow keys to change slice.`}
-        className="relative flex min-h-[320px] flex-1 items-center justify-center overflow-auto bg-black focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+        className="relative flex min-h-[320px] flex-1 items-center justify-center overflow-auto bg-black focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent lg:min-h-0"
       >
         {!loaded && !failed ? (
           <Skeleton className="absolute inset-6 rounded" />
@@ -283,13 +283,26 @@ export function MriViewer({
               "select-none transition-opacity duration-150",
               loaded ? "opacity-100" : "opacity-0",
             )}
-            style={{
-              width: `${352 * zoom}px`,
-              height: `${256 * zoom * (352 / 352)}px`,
-              maxWidth: zoom === 1 ? "100%" : "none",
-              objectFit: "contain",
-              imageRendering: zoom >= 3 ? "pixelated" : "auto",
-            }}
+            /*
+             * At 1x the image fills the available space and `object-contain`
+             * keeps the aspect ratio - it letterboxes rather than cropping or
+             * stretching. Previously this was a fixed 352x256 box, which left the
+             * MRI small in the middle of a large black canvas.
+             *
+             * Above 1x the size is explicit in pixels so the container's
+             * `overflow-auto` gives real pan-and-zoom.
+             */
+            style={
+              zoom === 1
+                ? { width: "100%", height: "100%", objectFit: "contain" }
+                : {
+                    width: `${352 * zoom}px`,
+                    height: `${256 * zoom}px`,
+                    maxWidth: "none",
+                    objectFit: "contain",
+                    imageRendering: zoom >= 3 ? "pixelated" : "auto",
+                  }
+            }
           />
         )}
 
