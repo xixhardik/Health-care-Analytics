@@ -291,6 +291,124 @@ export default function MethodologyPage() {
               : null}
           </div>
         </Panel>
+
+        {/* ------------------------------------ real data vs simulated demo */}
+        <Panel>
+          <PanelHeader
+            title="Real data vs simulated demonstration"
+            subtitle="What is measured, and what is only a workflow demonstration"
+          />
+          <div className="space-y-3 px-4 py-3">
+            <p className="max-w-3xl text-xs leading-relaxed text-ink-muted">
+              The current SPIDER dataset provides cross-sectional studies rather
+              than true longitudinal postoperative follow-up. The longitudinal
+              tracker therefore uses a simulated demonstration workflow and does
+              not claim postoperative recovery outcomes from SPIDER.
+            </p>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-md border border-line-subtle bg-surface-2/40 p-3">
+                <p className="label-caps mb-1.5 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3 w-3 text-seg-canal" aria-hidden />
+                  Real data
+                </p>
+                <ul className="space-y-1 text-2xs leading-relaxed text-ink-muted">
+                  <li>Every uploaded or sample study analysed by the frozen pipeline</li>
+                  <li>All segmentation, disc indexing and measurements on screen</li>
+                  <li>All model-estimated findings and their validated metrics</li>
+                  <li>The benchmark figures above, on a 33-patient held-out split</li>
+                  <li>
+                    The four studies behind the demonstration stages — real SPIDER
+                    volumes, real pipeline output
+                  </li>
+                </ul>
+              </div>
+
+              <div className="rounded-md border border-severity-high/40 bg-severity-high/10 p-3">
+                <p className="label-caps mb-1.5 flex items-center gap-1.5">
+                  <XCircle className="h-3 w-3 text-severity-high" aria-hidden />
+                  Simulated demonstration workflow
+                </p>
+                <ul className="space-y-1 text-2xs leading-relaxed text-ink-muted">
+                  <li>
+                    The <strong>timeline</strong> in the Recovery Tracker: four
+                    different studies from four different patients, arranged into
+                    stage positions
+                  </li>
+                  <li>
+                    Stage names such as Post-Surgery and 3-Month — positions in a
+                    demonstration, not observed timepoints
+                  </li>
+                  <li>
+                    Any trend across stages, which follows from which studies were
+                    selected
+                  </li>
+                </ul>
+                <p className="mt-2 text-2xs leading-relaxed text-severity-high">
+                  These stages are not postoperative follow-up scans from the same
+                  patient, and no recovery outcome is claimed.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <p className="label-caps mb-1">Why the demonstration is not real longitudinal data</p>
+              <p className="max-w-3xl text-2xs leading-relaxed text-ink-faint">
+                SPIDER images each patient once. It contains no postoperative
+                imaging, no surgical record, no intervention date and no follow-up
+                assessment; the time fields exist in the schema but are null in the
+                values. With no second timepoint and no outcome label there is
+                nothing to train a progression model against and nothing to
+                validate one with.
+              </p>
+            </div>
+
+            <div>
+              <p className="label-caps mb-1">How real longitudinal data would replace it</p>
+              <p className="max-w-3xl text-2xs leading-relaxed text-ink-faint">
+                The demonstration is defined entirely by{" "}
+                <code className="text-ink">demo/longitudinal_cases/&lt;case&gt;/manifest.json</code>.
+                A genuine dataset would replace that manifest with one whose stages
+                point at the same patient&apos;s successive studies, set real
+                <code className="text-ink"> acquisition_timestamp</code> values, and
+                declare a case type other than{" "}
+                <code className="text-ink">SIMULATED_LONGITUDINAL_DEMO</code>. The
+                loader deliberately refuses that type today, so enabling real
+                follow-up is an explicit, reviewable change rather than something
+                that could happen by accident. The disc-level analysis, viewers and
+                comparison panel would work unchanged, because they already read
+                per-stage pipeline output rather than anything stage-specific.
+              </p>
+            </div>
+
+            <div>
+              <p className="label-caps mb-1">2D / 3D viewing</p>
+              <p className="max-w-3xl text-2xs leading-relaxed text-ink-faint">
+                Slices are composed server-side and sent as PNGs, so a hidden class
+                is never transmitted. The 3D view is genuine WebGL volume rendering
+                (VTK.js) over a single cached volume request per analysis; adding it
+                means voxels now do cross the network on that one path, which is a
+                deliberate trade recorded in the architecture document. Both views
+                read one selected-disc state and one server-side finding decision,
+                so they cannot disagree.
+              </p>
+            </div>
+
+            <div>
+              <p className="label-caps mb-1">Current limitations</p>
+              <ul className="max-w-3xl space-y-1 text-2xs leading-relaxed text-ink-faint">
+                <li>No true longitudinal or postoperative capability</li>
+                <li>Single dataset, no external validation; 33 test patients</li>
+                <li>2-D slice-wise segmentation; no 3-D context in the model</li>
+                <li>Disc indexing is 93.84% correct, not 100%</li>
+                <li>Pfirrmann restricted to T2 and T2-SPACE series</li>
+                <li>Herniation is weakly validated on 18 positive test discs</li>
+                <li>No composite severity or recovery score, by design</li>
+                <li>Local deployment with no authentication</li>
+              </ul>
+            </div>
+          </div>
+        </Panel>
       </div>
     </div>
   );

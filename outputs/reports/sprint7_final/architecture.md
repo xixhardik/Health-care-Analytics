@@ -86,6 +86,7 @@ Route inventory as built:
 | `/reports` | static | report index |
 | `/reports/[id]` | dynamic | report view |
 | `/history` | static | all analyses |
+| `/recovery` | static | Recovery Tracker: simulated longitudinal timeline, cross-study comparison, 2D + 3D viewers (Sprint 8) |
 | `/methodology` | static | pipeline flow, served metric table, research progress |
 | `/about` | static | scope, limitations, disclaimer |
 | `/_not-found` | static | |
@@ -534,6 +535,88 @@ Closing the panel clears `selected`, which drops the `highlight_disc` parameter
 and returns the viewer to a plain overlay.
 
 ---
+
+## 12a. 3D volume rendering and 2D/3D synchronisation (Sprint 8)
+
+`components/Mri3DViewer.tsx`, VTK.js 37.3.0 over WebGL. Loaded with
+`next/dynamic` and `ssr: false` — vtk.js touches `window` at import time — and
+code-split, so `/analysis/[id]` grew only 2 kB and the library loads on first use
+of the 3D tab.
+
+Two volumes share one camera:
+
+| Volume | Scalars | Interpolation | Purpose |
+| --- | --- | --- | --- |
+| MRI | `image` channel, 0–255 | linear | greyscale anatomy, opacity-controlled |
+| Label | derived code per voxel | **nearest** | segmentation, findings, selection |
+
+Nearest-neighbour on the label volume is deliberate: interpolating label ids
+would invent classes that are not in the segmentation.
+
+The label scalars are rebuilt client-side by `lib/volume.ts → buildLabelScalars`
+whenever a cue changes, encoding one byte per voxel: `0` hidden, `1..3` semantic
+class, `8` finding-associated disc, `9` selected disc. Selection outranks
+findings, which outrank plain class, so the disc under inspection is never buried
+behind another cue.
+
+**A required detail.** vtk.js needs a rendering profile imported before any
+renderable is constructed, or it raises *"No vtkOpenGLViewNodeFactory
+implementation found for vtkRenderer"* and draws nothing — in a real browser as
+well as in jsdom. `Rendering/Profiles/Volume` is imported (not `All`, to keep
+geometry, glyph and molecule pipelines out of the bundle).
+
+Every VTK object — render window, renderer, GL view, interactor, both actors and
+both mappers — is explicitly deleted on unmount, and the interactor and GL view
+are detached from the container. React unmounting the DOM node releases neither
+the GPU resources nor the DOM listeners.
+
+Synchronisation is by construction rather than duplication. `ResultsView` owns
+`selected: DiscResult | null`; both viewers receive it. Which discs are
+finding-associated arrives in the volume header from the server. So neither view
+derives either fact, and they cannot disagree. Selecting in the 3D control panel
+calls back into the same `select()` the disc list uses. The 2D viewer stays
+mounted and is merely hidden on the 3D tab, preserving its slice position and
+prefetch cache.
+
+## 12b. Recovery Tracker (Sprint 8)
+
+`/recovery`, built on `components/RecoveryTracker.tsx` with the pure logic in
+`lib/recovery.ts`. It demonstrates a longitudinal workflow over **four different
+real SPIDER studies from four different patients**.
+
+Five timeline positions, four studies:
+
+| Position | Study | Research status | Own imaging? |
+| --- | --- | --- | --- |
+| Diagnosis | `177_t2` | Baseline | yes |
+| Surgical Evaluation | *(reuses baseline)* | Surgical Evaluation | **no** |
+| Post-Surgery | `106_t2` | Postoperative Demonstration | yes |
+| 3-Month Recovery | `16_t2` | Recovery Monitoring | yes |
+| 6-Month Recovery | `6_t2` | Final Follow-up Demonstration | yes |
+
+Surgical Evaluation has no scan of its own: it is an assessment step over the
+baseline imaging. Giving it a scan would mean inventing imaging.
+
+The page runs each stage's study through the real pipeline on load (~3 s each on
+CPU), reporting real stage progress. Analysis ids are remembered in
+`sessionStorage` and verified before reuse, so returning to the page does not
+re-analyse; a deleted analysis is simply re-run.
+
+The comparison panel shows only direct pipeline outputs — segmented disc count,
+mean disc height, finding-associated disc count, highest Pfirrmann grade, per-
+finding counts, mean canal width, mean disc area, slice counts — with the
+difference between consecutive columns. It is captioned **"Cross-study
+demonstration trend — not patient recovery."** An unavailable measurement renders
+as `unavailable`, never as `0`: a missing measurement and a measurement of zero
+are different statements. No composite recovery score or percentage exists
+anywhere in the feature, and a test asserts the rendered DOM contains none.
+
+Stage changes clear a selected disc that does not exist in the new study, because
+studies have different disc counts (9, 7, 7, 6).
+
+The `SIMULATED LONGITUDINAL DEMO` banner and the cross-study disclaimer are
+rendered permanently on the page itself — not delegated to the methodology page,
+not collapsible, not dismissible.
 
 ## 13. Report generation
 

@@ -34,6 +34,7 @@ const NAV = [
   { href: "/new", label: "New Analysis", icon: FilePlus2 },
   { href: "/history", label: "Analysis History", icon: History },
   { href: "/reports", label: "Reports", icon: FileText },
+  { href: "/recovery", label: "Recovery Tracker", icon: Activity },
   { href: "/methodology", label: "Methodology", icon: Workflow },
   { href: "/about", label: "About", icon: Info },
 ] as const;

@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   FileScan,
   FilePlus2,
+  FlaskConical,
   Loader2,
   XCircle,
 } from "lucide-react";
@@ -23,6 +24,7 @@ import {
   StatCard,
 } from "@/components/ui";
 import { ApiError, api, formatDate } from "@/lib/api";
+import { CROSS_STUDY_DISCLAIMER } from "@/lib/recovery";
 import type { HealthResponse, HistoryResponse } from "@/lib/types";
 
 function StatusBadge({ status }: { status: string }) {
@@ -135,6 +137,36 @@ export default function DashboardPage() {
             onRetry={load}
           />
         ) : null}
+
+        {/* ---------------------------------- longitudinal demonstration */}
+        <Panel>
+          <PanelHeader
+            title="Longitudinal workflow demonstration"
+            subtitle="Simulated timeline across four different research studies"
+            actions={
+              <Link href="/recovery">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<FlaskConical className="h-3.5 w-3.5" />}
+                >
+                  Load Longitudinal Demo
+                </Button>
+              </Link>
+            }
+          />
+          <div className="px-4 py-3">
+            <p className="max-w-3xl text-xs leading-relaxed text-ink-muted">
+              The Recovery Tracker demonstrates how a longitudinal imaging workflow
+              would operate. It stages four different SPIDER studies from four
+              different patients; the imaging and every measurement are real
+              pipeline output, but the timeline is simulated.
+            </p>
+            <p className="mt-1.5 max-w-3xl text-2xs leading-relaxed text-ink-faint">
+              {CROSS_STUDY_DISCLAIMER}
+            </p>
+          </div>
+        </Panel>
 
         {/* ------------------------------------------------ recent */}
         <Panel>

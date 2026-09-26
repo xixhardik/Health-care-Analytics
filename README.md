@@ -303,6 +303,65 @@ asserts, among other things, that progress is monotonic and never synthetic, tha
 unsupported findings are null with a reason, and that no traceback reaches the
 client.
 
+## 9a. 3D viewing and the longitudinal workflow demonstration
+
+### Real 3D volume rendering
+
+`GET /api/analysis/{id}/volume` serves a completed analysis's image volume and
+both label maps in one cacheable response, and the results workspace renders it
+with **VTK.js over WebGL** behind a `2D View | 3D View` switch. Rotate, zoom, pan,
+reset camera, fullscreen, MRI visibility and opacity, segmentation and per-class
+visibility, findings visibility and selected-disc highlighting are all supported.
+
+This **intentionally reverses** the earlier property that the volume never crossed
+the network — volumetric rendering needs the voxels. The 2D slice path is
+unchanged and still filters classes server-side. The trade, and what it costs, is
+recorded in `outputs/reports/sprint7_final/architecture.md` §11a. Measured on the
+sample study: 6,337 KB of voxels leaves as **962 KB** gzipped, once per analysis.
+
+Both viewers read one selected-disc state and one server-side finding decision
+(carried in the volume header), so selecting a disc in either view updates the
+other and they cannot disagree.
+
+### Recovery Tracker — a simulated workflow, not follow-up data
+
+**The SPIDER dataset provides cross-sectional studies rather than true
+longitudinal postoperative follow-up. The Recovery Tracker therefore uses a
+simulated demonstration workflow and does not claim postoperative recovery
+outcomes from SPIDER.**
+
+`/recovery` demonstrates how a longitudinal workflow would operate, using **four
+different real SPIDER studies from four different patients**, all from the
+held-out test split:
+
+| Timeline position | Source study | Discs | Mean disc height | Finding-associated |
+| --- | --- | --- | --- | --- |
+| Diagnosis | `177_t2` | 9 | 4.64 mm | 8 |
+| Surgical Evaluation | *(assessment of the baseline imaging)* | — | — | — |
+| Post-Surgery | `106_t2` | 7 | 5.80 mm | 7 |
+| 3-Month Recovery | `16_t2` | 7 | 7.79 mm | 2 |
+| 6-Month Recovery | `6_t2` | 6 | 8.49 mm | 1 |
+
+Every number above is real pipeline output. **The timeline is what is simulated.**
+Any trend across the stages follows from which studies were selected; it is not an
+observed recovery trajectory, and the comparison panel is captioned *"Cross-study
+demonstration trend — not patient recovery."* No recovery percentage or composite
+score is produced anywhere.
+
+The interface states this permanently, not only here:
+
+> These stages use different SPIDER studies to demonstrate the longitudinal
+> workflow. They are not postoperative follow-up scans from the same patient.
+
+Definitions live in `demo/longitudinal_cases/<case>/manifest.json` — text only, no
+imaging. Each stage references a gitignored local dataset path; if it is absent the
+API reports the stage unavailable and **never substitutes another scan**. The
+loader refuses any manifest declaring itself real follow-up, so enabling genuine
+longitudinal data is an explicit, reviewable change. See `demo/README.md`.
+
+For an ordinary single study the application shows *Single-study analysis* and
+*Longitudinal follow-up unavailable for this study*, and invents no stages.
+
 ## 10. Limitations
 
 - **Validated performance is not per-study performance.** Every metric above was
@@ -1015,7 +1074,8 @@ discs, so its denominator is unreliable. Intensity ratios are the most robust.
 
 ### Not claimed
 
-No composite severity score, no "damage percentage", no healing or recovery
+No composite severity score, no "damage percentage", no recovery percentage, no
+true longitudinal or postoperative capability, no healing or recovery
 metric, no 6-/9-month comparison, no longitudinal improvement, no diagnosis, and
 no final clinical performance claim. The dataset contains a single timepoint per
 patient and no postoperative follow-up imaging.
