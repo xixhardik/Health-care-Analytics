@@ -422,6 +422,21 @@ describe("findings overlay and MRI viewport size", () => {
     expect(controls().contains(legend)).toBe(true);
   });
 
+  it("keeps the finding opacity control on the primary overlay row", async () => {
+    render(<ResultsView result={resultFixture} />);
+    await userEvent.click(findingsToggle("Off"));
+
+    const row = screen.getByText("Findings Overlay").parentElement!;
+
+    // Same row as the toggle and the marked-disc count, so the control most
+    // likely to be reached for is not below the fold of the scrolling strip.
+    expect(row.contains(findingsToggle("On"))).toBe(true);
+    expect(row.contains(screen.getByText("1 disc marked"))).toBe(true);
+    expect(row.contains(screen.getByLabelText("Finding"))).toBe(true);
+    // And it drops onto its own line when the row runs out of width.
+    expect(row.className).toContain("flex-wrap");
+  });
+
   it("floors the canvas so nothing below it can flatten the image", () => {
     render(<ResultsView result={resultFixture} />);
 

@@ -457,11 +457,21 @@ export function MriViewer({
                 {markedDiscs.length} disc
                 {markedDiscs.length === 1 ? "" : "s"} marked
               </Badge>
-            </div>
 
-            {findingsOn ? (
-              <>
-                <div className="flex items-center gap-3">
+              {/*
+                The opacity control rides on this row rather than below it, so
+                the control most likely to be reached for stays in view without
+                scrolling the strip.
+
+                It costs the row no height: the tallest thing here is already the
+                toggle. `flex-1` takes the leftover width at desktop, and once
+                that runs out `flex-wrap` on the row drops the whole group onto
+                its own line - absorbed by the strip's scroll, never by the
+                canvas. `min-w-0` on the slider is what lets it shrink at all; a
+                range input has an intrinsic width that would otherwise overflow.
+              */}
+              {findingsOn ? (
+                <div className="flex min-w-[10rem] flex-1 items-center gap-2">
                   <label
                     htmlFor="finding-opacity"
                     className="label-caps shrink-0"
@@ -478,14 +488,18 @@ export function MriViewer({
                     onChange={(event) =>
                       setFindingOpacity(Number(event.target.value))
                     }
-                    className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-surface-3 disabled:opacity-40"
+                    className="h-1.5 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-surface-3 disabled:opacity-40"
                     style={{ accentColor: FINDING_OVERLAY.hex }}
                   />
-                  <span className="w-9 text-right font-mono text-2xs text-ink-muted">
+                  <span className="w-9 shrink-0 text-right font-mono text-2xs text-ink-muted">
                     {Math.round(findingOpacity * 100)}%
                   </span>
                 </div>
+              ) : null}
+            </div>
 
+            {findingsOn ? (
+              <>
                 {/* Legend: red / green / white, in the app's existing idiom. */}
                 <ul
                   className="flex flex-wrap items-center gap-x-3 gap-y-1"
