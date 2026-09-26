@@ -16,7 +16,6 @@ import {
   Eye,
   EyeOff,
   Layers,
-  Maximize2,
   RotateCcw,
   ZoomIn,
   ZoomOut,
@@ -177,76 +176,25 @@ export function MriViewer({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* ---------------------------------------------------- toolbar */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-line-subtle px-3 py-2">
-        <div
-          className="flex rounded-md border border-line bg-surface-2 p-0.5"
-          role="group"
-          aria-label="Rendering mode"
-        >
-          {MODES.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setMode(item.id)}
-              aria-pressed={mode === item.id}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded px-2 py-1 text-2xs font-medium transition-colors",
-                mode === item.id
-                  ? "bg-accent/15 text-accent"
-                  : "text-ink-faint hover:text-ink",
-              )}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
-        </div>
+      {/*
+        ---------------------------------------------------- canvas
 
-        <div className="ml-auto flex items-center gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setZoomStep((s) => Math.max(0, s - 1))}
-            disabled={zoomStep === 0}
-            aria-label="Zoom out"
-          >
-            <ZoomOut className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-          <span className="w-10 text-center font-mono text-2xs text-ink-muted">
-            {zoom.toFixed(1)}x
-          </span>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() =>
-              setZoomStep((s) => Math.min(ZOOM_STEPS.length - 1, s + 1))
-            }
-            disabled={zoomStep === ZOOM_STEPS.length - 1}
-            aria-label="Zoom in"
-          >
-            <ZoomIn className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setZoomStep(0)}
-            disabled={zoomStep === 0}
-            aria-label="Reset zoom"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-        </div>
-      </div>
+        First child, and the only one that grows. Everything else below is a
+        fixed-height strip, so the image gets whatever the workspace has left.
 
-      {/* ---------------------------------------------------- canvas */}
+        `lg:min-h-[200px]` is a floor, not a size. The canvas is `flex-1` with a
+        zero basis, which means it is the first thing flexbox takes space away
+        from; without a floor, anything that grows underneath it can drive the
+        image down to nothing. That is exactly how expanding the findings overlay
+        used to flatten the MRI into a strip.
+      */}
       <div
         ref={containerRef}
         tabIndex={0}
         onKeyDown={onKeyDown}
         role="group"
         aria-label={`MRI slice viewer, slice ${index + 1} of ${sliceCount}. Use arrow keys to change slice.`}
-        className="relative flex min-h-[320px] flex-1 items-center justify-center overflow-auto bg-black focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent lg:min-h-0"
+        className="relative flex min-h-[320px] flex-1 items-center justify-center overflow-auto bg-black focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent lg:min-h-[200px]"
       >
         {!loaded && !failed ? (
           <Skeleton className="absolute inset-6 rounded" />
@@ -321,39 +269,139 @@ export function MriViewer({
         </div>
       </div>
 
-      {/* ---------------------------------------------------- slice control */}
-      <div className="flex items-center gap-2 border-t border-line-subtle px-3 py-2">
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => step(-1)}
-          disabled={index === 0}
-          aria-label="Previous slice"
+      {/*
+        ---------------------------------------------------- control bar
+
+        Rendering mode, slice position and zoom, on one row. These were two rows -
+        one above the image and one below - which cost the canvas a whole row of
+        height for no functional gain. `flex-wrap` splits them back onto separate
+        lines when the column is too narrow, so nothing is ever pushed out of
+        reach on a small screen.
+      */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-line-subtle px-3 py-2">
+        <div
+          className="flex rounded-md border border-line bg-surface-2 p-0.5"
+          role="group"
+          aria-label="Rendering mode"
         >
-          <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-        </Button>
-        <input
-          type="range"
-          min={0}
-          max={Math.max(0, sliceCount - 1)}
-          value={index}
-          onChange={(event) => setIndex(Number(event.target.value))}
-          aria-label="Slice position"
-          className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-surface-3 accent-accent"
-        />
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => step(1)}
-          disabled={index >= sliceCount - 1}
-          aria-label="Next slice"
-        >
-          <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-        </Button>
+          {MODES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setMode(item.id)}
+              aria-pressed={mode === item.id}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded px-2 py-1 text-2xs font-medium transition-colors",
+                mode === item.id
+                  ? "bg-accent/15 text-accent"
+                  : "text-ink-faint hover:text-ink",
+              )}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex min-w-[9rem] flex-1 items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => step(-1)}
+            disabled={index === 0}
+            aria-label="Previous slice"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, sliceCount - 1)}
+            value={index}
+            onChange={(event) => setIndex(Number(event.target.value))}
+            aria-label="Slice position"
+            className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-surface-3 accent-accent"
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => step(1)}
+            disabled={index >= sliceCount - 1}
+            aria-label="Next slice"
+          >
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setZoomStep((s) => Math.max(0, s - 1))}
+            disabled={zoomStep === 0}
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+          <span className="w-10 text-center font-mono text-2xs text-ink-muted">
+            {zoom.toFixed(1)}x
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              setZoomStep((s) => Math.min(ZOOM_STEPS.length - 1, s + 1))
+            }
+            disabled={zoomStep === ZOOM_STEPS.length - 1}
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setZoomStep(0)}
+            disabled={zoomStep === 0}
+            aria-label="Reset zoom"
+          >
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+        </div>
       </div>
 
-      {/* ---------------------------------------------------- overlay controls */}
-      <div className="space-y-2.5 border-t border-line-subtle px-3 py-2.5">
+      {/*
+        ---------------------------------------------------- overlay controls
+
+        A fixed-height strip on desktop that scrolls its own contents.
+
+        This is the whole fix. Switching the findings overlay on adds roughly
+        130px of slider, legend and explanation, and while this block was free to
+        grow it took that height straight out of the canvas - so turning the
+        overlay on flattened the MRI. A constant height means the canvas is the
+        same size with the overlay on and off. Nothing is deleted and nothing is
+        permanently hidden: the explanation is still rendered, in full, and
+        reachable by scrolling this strip.
+
+        The height is keyed on `findingsAvailable`, which the server decides once
+        per study, and deliberately not on `showFindings`. The user's toggle
+        therefore cannot change this element's box at all. A study with no
+        findings gets no cap, so it does not show a half-empty panel.
+
+        `scrollbar-gutter: stable` reserves the scrollbar's width up front. Without
+        it the scrollbar appears only once the overlay expands, which narrows the
+        rows and reflows them - a visible twitch for no reason.
+
+        Below `lg` there is no cap: the page is a scrolling document there, and a
+        scroll region inside a scrolling page is worse than a taller page.
+      */}
+      <div
+        data-testid="viewer-controls"
+        className={cn(
+          "space-y-2.5 border-t border-line-subtle px-3 py-2.5 lg:space-y-2 lg:py-2",
+          findingsAvailable &&
+            "lg:h-[7.5rem] lg:overflow-y-auto lg:[scrollbar-gutter:stable]",
+        )}
+      >
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="label-caps">Classes</span>
           {SEG_CLASSES.map((item) => (

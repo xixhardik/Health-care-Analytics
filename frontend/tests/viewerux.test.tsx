@@ -10,6 +10,9 @@
  *    screen and a half down the page.
  *  - the auto-rotation *lifecycle* - when it starts, what stops it, when it
  *    resumes, and that nothing survives unmount.
+ *  - that the findings overlay cannot resize the MRI viewport. Since pixel
+ *    heights are unmeasurable here, what is asserted is that the canvas box and
+ *    the controls box are not functions of the overlay toggle at all.
  */
 
 import { act, render, screen, waitFor } from "@testing-library/react";
@@ -328,6 +331,134 @@ describe("analysis workspace layout", () => {
     expect(image.style.width).toBe(`${352 * 1.5}px`);
     expect(image.style.height).toBe(`${256 * 1.5}px`);
     expect(image.style.objectFit).toBe("contain");
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* Problem 3: the findings overlay must not resize the MRI viewport            */
+/* -------------------------------------------------------------------------- */
+
+describe("findings overlay and MRI viewport size", () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
+
+  const canvas = () => screen.getByRole("group", { name: /MRI slice viewer/i });
+  const controls = () => screen.getByTestId("viewer-controls");
+  const sliceImage = () =>
+    screen.getByAltText(/Lumbar MRI slice/i) as HTMLImageElement;
+  const findingsToggle = (state: "On" | "Off") =>
+    screen.getByRole("checkbox", { name: new RegExp(`^${state}$`) });
+
+  it("gives the overlay controls a constant desktop height and their own scrollbar", () => {
+    render(<ResultsView result={resultFixture} />);
+
+    // A fixed box with its own scrollbar is what stops this strip taking height
+    // out of the canvas when the overlay expands.
+    expect(controls().className).toContain("lg:h-[7.5rem]");
+    expect(controls().className).toContain("lg:overflow-y-auto");
+    // Gutter reserved up front, so the scrollbar appearing cannot reflow the rows.
+    expect(controls().className).toContain("lg:[scrollbar-gutter:stable]");
+  });
+
+  it("leaves the overlay controls unbounded below lg, where the page scrolls", () => {
+    render(<ResultsView result={resultFixture} />);
+
+    // The cap is lg-prefixed only; a scroll region inside a scrolling document
+    // would be worse than a taller page.
+    expect(controls().className).not.toMatch(/(^|\s)h-\[/);
+    expect(controls().className).not.toMatch(/(^|\s)overflow-y-auto/);
+  });
+
+  it("does not change the canvas box when the overlay is switched on", async () => {
+    render(<ResultsView result={resultFixture} />);
+    const before = canvas().className;
+
+    await userEvent.click(findingsToggle("Off"));
+
+    // jsdom has no layout engine, so the *contract* is asserted rather than a
+    // pixel height: the canvas box is not a function of the overlay being on.
+    expect(sliceImage().src).toContain("highlight=findings");
+    expect(canvas().className).toBe(before);
+  });
+
+  it("does not change the controls box when the overlay is switched on", async () => {
+    render(<ResultsView result={resultFixture} />);
+    const before = controls().className;
+
+    await userEvent.click(findingsToggle("Off"));
+
+    // The height is keyed on server-decided availability, never on the toggle.
+    expect(controls().className).toBe(before);
+  });
+
+  it("stays stable across repeated toggling", async () => {
+    render(<ResultsView result={resultFixture} />);
+    const canvasBox = canvas().className;
+    const controlsBox = controls().className;
+
+    for (let round = 0; round < 2; round += 1) {
+      await userEvent.click(findingsToggle("Off"));
+      expect(canvas().className).toBe(canvasBox);
+      expect(controls().className).toBe(controlsBox);
+
+      await userEvent.click(findingsToggle("On"));
+      expect(canvas().className).toBe(canvasBox);
+      expect(controls().className).toBe(controlsBox);
+    }
+  });
+
+  it("keeps the overlay explanation rendered instead of dropping it to save height", async () => {
+    render(<ResultsView result={resultFixture} />);
+    await userEvent.click(findingsToggle("Off"));
+
+    // Scrollable, not hidden. The sentence that stops the red being read as
+    // tissue-level pathology has to stay on screen.
+    expect(
+      screen.getByText(/not a diagnosis of damaged tissue/i),
+    ).toBeInTheDocument();
+
+    const legend = screen.getByLabelText("Overlay legend");
+    expect(controls().contains(legend)).toBe(true);
+  });
+
+  it("floors the canvas so nothing below it can flatten the image", () => {
+    render(<ResultsView result={resultFixture} />);
+
+    expect(canvas().className).toContain("flex-1");
+    // A zero-basis flex child is the first thing space is taken from, so it
+    // needs a floor of its own on the bounded desktop layout.
+    expect(canvas().className).toContain("lg:min-h-[200px]");
+    // The stacked layout keeps its larger floor.
+    expect(canvas().className).toContain("min-h-[320px]");
+  });
+
+  it("puts mode, slice and zoom in one row instead of two", () => {
+    render(<ResultsView result={resultFixture} />);
+    const bar = screen.getByRole("group", { name: /Rendering mode/i })
+      .parentElement!;
+
+    expect(bar.contains(screen.getByLabelText("Slice position"))).toBe(true);
+    expect(bar.contains(screen.getByRole("button", { name: /Zoom in/i }))).toBe(
+      true,
+    );
+    // Wraps back to separate lines when the column is too narrow.
+    expect(bar.className).toContain("flex-wrap");
+  });
+
+  it("puts the image first in the viewer column, with the controls under it", () => {
+    render(<ResultsView result={resultFixture} />);
+    const column = canvas().parentElement!;
+
+    expect(column.firstElementChild).toBe(canvas());
+    expect(column.lastElementChild).toBe(controls());
+  });
+
+  it("does not introduce horizontal scrolling in the viewer", () => {
+    render(<ResultsView result={resultFixture} />);
+
+    expect(canvas().className).not.toContain("overflow-x");
+    expect(controls().className).not.toContain("overflow-x");
   });
 });
 
